@@ -89,8 +89,6 @@ namespace MyGame
             OnResize();
         }
 
-        #region IDisposable
-
         protected virtual void Dispose(bool disposing)
         {
             if (!_disposed)
@@ -112,7 +110,5 @@ namespace MyGame
             Dispose(disposing: true);
             GC.SuppressFinalize(this);
         }
-
-        #endregion
     }
 }

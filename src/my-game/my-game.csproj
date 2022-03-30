@@ -6,15 +6,23 @@
     <RootNamespace>MyGame</RootNamespace>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="glfw-net" Version="3.3.1" />
+    <PackageReference Include="Vortice.D3DCompiler" Version="2.1.4-beta" />
     <PackageReference Include="Vortice.Direct3D11" Version="2.1.2" />
     <PackageReference Include="Vortice.Mathematics" Version="1.4.8" />
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="assets\shaders\main.ps.hlsl">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="assets\shaders\main.vs.hlsl">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="glfw.dll">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
