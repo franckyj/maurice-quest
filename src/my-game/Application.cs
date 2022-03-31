@@ -7,7 +7,7 @@ namespace MyGame
         private string _title;
         private bool _disposed;
 
-        protected NativeWindow Window { get; private set; }
+        protected NativeWindow? Window { get; private set; }
         protected int Width { get; private set; }
         protected int Height { get; private set; }
 
@@ -21,7 +21,7 @@ namespace MyGame
             Initialize();
             Load();
 
-            while (!Window.IsClosing)
+            while (!Window!.IsClosing)
             {
                 Glfw.PollEvents();
 

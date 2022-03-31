@@ -15,6 +15,9 @@ namespace MyGame
         private IDXGISwapChain1 _swapchain;
         private ID3D11Device _device;
         private ID3D11DeviceContext _deviceContext;
+        //private ID3D11Texture2D[] _backBuffers;
+        //private ID3D11RenderTargetView[] _renderTargets;
+        //private int _backBufferIndex;
         private ID3D11Texture2D _backBuffer;
         private ID3D11RenderTargetView _renderTarget;
 
@@ -44,7 +47,10 @@ namespace MyGame
         }
 
         public HelloD3D11(string title) : base(title)
-        { }
+        {
+            //_backBuffers = new ID3D11Texture2D[2];
+            //_renderTargets = new ID3D11RenderTargetView[2];
+        }
 
         protected override void Initialize()
         {
@@ -71,6 +77,11 @@ namespace MyGame
 
             CreateSwapchain(Window.Hwnd, Width, Height);
             CreateSwapchainResources();
+        }
+
+        protected override void Load()
+        {
+            base.Load();
 
             (_vertexShader, _vertexShaderBlob) = CreateVertexShader("assets/shaders/main.vs.hlsl");
             _pixelShader = CreatePixelShader("assets/shaders/main.ps.hlsl");
@@ -84,9 +95,9 @@ namespace MyGame
 
             var vertices = new Span<VertexPositionColor>(new[]
             {
-                new VertexPositionColor(new Vector3(0.0f,  0.5f, 0.0f), new Color(0.25f, 0.39f, 0.19f, 1f)),
-                new VertexPositionColor(new Vector3(0.5f, -0.5f, 0.0f), new Color(0.44f, 0.75f, 0.35f, 1f)),
-                new VertexPositionColor(new Vector3(-0.5f, -0.5f, 0.0f), new Color(0.38f, 0.55f, 0.20f, 1f)),
+                new VertexPositionColor(new Vector3(0.0f,  0.5f, 0.0f), new Color4(0.25f, 0.39f, 0.19f, 1f)),
+                new VertexPositionColor(new Vector3(0.5f, -0.5f, 0.0f), new Color4(0.44f, 0.75f, 0.35f, 1f)),
+                new VertexPositionColor(new Vector3(-0.5f, -0.5f, 0.0f), new Color4(0.38f, 0.55f, 0.20f, 1f)),
             });
 
             _vertexBuffer = _device.CreateBuffer(BindFlags.VertexBuffer, vertices, vertices.Length * sizeof(VertexPositionColor));
@@ -124,12 +135,13 @@ namespace MyGame
             _deviceContext.PSSetShader(_pixelShader);
 
             // output merger
-            //_deviceContext.OMSetRenderTargets(_renderTarget, _depthStencilView);
-            _deviceContext.OMSetRenderTargets(_renderTarget, null);
+            _deviceContext.OMSetRenderTargets(1, new[] { _renderTarget }, null);
 
             _deviceContext.Draw(3, 0);
 
             _swapchain.Present(1, PresentFlags.None);
+            //_backBufferIndex++;
+            //_backBufferIndex = _backBufferIndex % 2;
         }
 
         private void CreateSwapchain(IntPtr windowHandle, int width, int height)
@@ -165,7 +177,12 @@ namespace MyGame
 
         private void CreateSwapchainResources()
         {
-            _dxgiFactory.MakeWindowAssociation(Window.Handle, WindowAssociationFlags.IgnoreAltEnter);
+            _dxgiFactory.MakeWindowAssociation(Window!.Handle, WindowAssociationFlags.IgnoreAltEnter);
+            //_backBuffers[0] = _swapchain.GetBuffer<ID3D11Texture2D>(0);
+            //_renderTargets[0] = _device.CreateRenderTargetView(_backBuffers[0]);
+            //_backBuffers[1] = _swapchain.GetBuffer<ID3D11Texture2D>(1);
+            //_renderTargets[1] = _device.CreateRenderTargetView(_backBuffers[1]);
+
             _backBuffer = _swapchain.GetBuffer<ID3D11Texture2D>(0);
             _renderTarget = _device.CreateRenderTargetView(_backBuffer);
 
@@ -203,6 +220,11 @@ namespace MyGame
         {
             //_depthStencilView?.Dispose();
             //_depthStencilBuffer?.Dispose();
+            //_renderTargets[0]?.Dispose();
+            //_renderTargets[1]?.Dispose();
+            //_backBuffers[0]?.Dispose();
+            //_backBuffers[1]?.Dispose();
+
             _renderTarget?.Dispose();
             _backBuffer?.Dispose();
         }
