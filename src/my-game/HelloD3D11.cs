@@ -15,28 +15,17 @@ namespace MyGame
         private IDXGISwapChain1 _swapchain;
         private ID3D11Device _device;
         private ID3D11DeviceContext _deviceContext;
-        //private ID3D11Texture2D[] _backBuffers;
-        //private ID3D11RenderTargetView[] _renderTargets;
-        //private int _backBufferIndex;
         private ID3D11Texture2D _backBuffer;
         private ID3D11RenderTargetView _renderTarget;
-
         private Blob _vertexShaderBlob;
         private ID3D11VertexShader _vertexShader;
         private ID3D11PixelShader _pixelShader;
         private ID3D11InputLayout _inputLayout;
         private ID3D11Buffer _vertexBuffer;
-        //private ID3D11Texture2D _depthStencilBuffer;
-        //private ID3D11DepthStencilView _depthStencilView;
-        //private ID3D11RasterizerState _wireFrameRasterizerState;
-        //private ID3D11RasterizerState _solidRasterizerState;
-        //private ID3D11Buffer[] _constantBuffers;
+
+        // debug layer https://github.com/amerkoleci/Vortice.Windows/issues/170#issuecomment-903089686
 
         private Viewport _viewport;
-        //private Int2 _scissorRectDimensions;
-        //private Matrix4x4 _projectionMatrix;
-        //private Matrix4x4 _viewMatrix;
-        //private Matrix4x4 _worldMatrix;
 
         static HelloD3D11()
         {
@@ -48,8 +37,6 @@ namespace MyGame
 
         public HelloD3D11(string title) : base(title)
         {
-            //_backBuffers = new ID3D11Texture2D[2];
-            //_renderTargets = new ID3D11RenderTargetView[2];
         }
 
         protected override void Initialize()
@@ -75,7 +62,7 @@ namespace MyGame
             tempDeviceContext.Dispose();
             tempDevice.Dispose();
 
-            CreateSwapchain(Window.Hwnd, Width, Height);
+            CreateSwapchain(Window!.Hwnd, Width, Height);
             CreateSwapchainResources();
         }
 
@@ -89,15 +76,19 @@ namespace MyGame
             var inputLayoutDescriptor = new[]
             {
                 new InputElementDescription("POSITION", 0, Format.R32G32B32_Float, 0, 0),
-                new InputElementDescription("COLOR", 0, Format.R32G32B32A32_Float, 12, 0),
+                new InputElementDescription("COLOR", 0, Format.R32G32B32_Float, 12, 0),
             };
             _inputLayout = _device.CreateInputLayout(inputLayoutDescriptor, _vertexShaderBlob);
 
             var vertices = new Span<VertexPositionColor>(new[]
             {
-                new VertexPositionColor(new Vector3(0.0f,  0.5f, 0.0f), new Color4(0.25f, 0.39f, 0.19f, 1f)),
-                new VertexPositionColor(new Vector3(0.5f, -0.5f, 0.0f), new Color4(0.44f, 0.75f, 0.35f, 1f)),
-                new VertexPositionColor(new Vector3(-0.5f, -0.5f, 0.0f), new Color4(0.38f, 0.55f, 0.20f, 1f)),
+                //new VertexPositionColor(new Vector3(0.0f,  0.5f, 0.0f), new Color4(0.25f, 0.39f, 0.19f, 1f)),
+                //new VertexPositionColor(new Vector3(0.5f, -0.5f, 0.0f), new Color4(0.44f, 0.75f, 0.35f, 1f)),
+                //new VertexPositionColor(new Vector3(-0.5f, -0.5f, 0.0f), new Color4(0.38f, 0.55f, 0.20f, 1f))
+
+                new VertexPositionColor(new Vector3(0.0f,  0.5f, 0.0f), new Color4(1f, 0f, 0f, 1f)),
+                new VertexPositionColor(new Vector3(0.5f, -0.5f, 0.0f), new Color4(0f, 1f, 0f, 1f)),
+                new VertexPositionColor(new Vector3(-0.5f, -0.5f, 0.0f), new Color4(0f, 0f, 1f, 1f))
             });
 
             _vertexBuffer = _device.CreateBuffer(BindFlags.VertexBuffer, vertices, vertices.Length * sizeof(VertexPositionColor));
@@ -140,8 +131,6 @@ namespace MyGame
             _deviceContext.Draw(3, 0);
 
             _swapchain.Present(1, PresentFlags.None);
-            //_backBufferIndex++;
-            //_backBufferIndex = _backBufferIndex % 2;
         }
 
         private void CreateSwapchain(IntPtr windowHandle, int width, int height)
@@ -177,54 +166,14 @@ namespace MyGame
 
         private void CreateSwapchainResources()
         {
-            _dxgiFactory.MakeWindowAssociation(Window!.Handle, WindowAssociationFlags.IgnoreAltEnter);
-            //_backBuffers[0] = _swapchain.GetBuffer<ID3D11Texture2D>(0);
-            //_renderTargets[0] = _device.CreateRenderTargetView(_backBuffers[0]);
-            //_backBuffers[1] = _swapchain.GetBuffer<ID3D11Texture2D>(1);
-            //_renderTargets[1] = _device.CreateRenderTargetView(_backBuffers[1]);
-
             _backBuffer = _swapchain.GetBuffer<ID3D11Texture2D>(0);
             _renderTarget = _device.CreateRenderTargetView(_backBuffer);
 
-            //var depthStencilTextureDescriptor = new Texture2DDescription
-            //{
-            //    ArraySize = 1,
-            //    BindFlags = BindFlags.DepthStencil,
-            //    Width = Width,
-            //    Height = Height,
-            //    Format = Format.D24_UNorm_S8_UInt,
-            //    MipLevels = 1,
-            //    Usage = ResourceUsage.Default,
-            //    CpuAccessFlags = CpuAccessFlags.None,
-            //    SampleDescription = new SampleDescription(1, 0)
-            //};
-            //_depthStencilBuffer = _device.CreateTexture2D(depthStencilTextureDescriptor);
-            //_depthStencilView = _device.CreateDepthStencilView(
-            //    _depthStencilBuffer!,
-            //    new DepthStencilViewDescription(
-            //        _depthStencilBuffer,
-            //        DepthStencilViewDimension.Texture2D));
-
-            //_viewport = new Viewport(Width, Height);
-            //_scissorRectDimensions = new Int2(Width, Height);
-
-            //_projectionMatrix = Matrix4x4.CreatePerspectiveFieldOfView(
-            //    MathHelper.ToRadians(60.0f),
-            //    Width / (float)Height,
-            //    0.1f,
-            //    512.0f);
-            //_deviceContext.UpdateSubresource(_projectionMatrix, _constantBuffers[0]);
+            _viewport = new Viewport(Width, Height);
         }
 
         private void DestroySwapchainResources()
         {
-            //_depthStencilView?.Dispose();
-            //_depthStencilBuffer?.Dispose();
-            //_renderTargets[0]?.Dispose();
-            //_renderTargets[1]?.Dispose();
-            //_backBuffers[0]?.Dispose();
-            //_backBuffers[1]?.Dispose();
-
             _renderTarget?.Dispose();
             _backBuffer?.Dispose();
         }
@@ -323,22 +272,8 @@ namespace MyGame
             _inputLayout?.Dispose();
             _vertexBuffer?.Dispose();
 
-            //foreach (var constantBuffer in _constantBuffers)
-            //{
-            //    constantBuffer?.Dispose();
-            //}
-
-            //_textureLinearSamplerState?.Dispose();
-            //_textureSrv?.Dispose();
-            //_texture?.Dispose();
-            //_wireFrameRasterizerState?.Dispose();
-            //_solidRasterizerState?.Dispose();
-
             _deviceContext?.Dispose();
             _device?.Dispose();
-            //_factory?.Dispose();
-
-            //_imagingFactory?.Dispose();
 
             base.Dispose(disposing);
         }
