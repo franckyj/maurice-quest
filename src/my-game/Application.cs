@@ -1,4 +1,5 @@
-﻿using GLFW;
+﻿using System.Runtime.InteropServices;
+using GLFW;
 
 namespace MyGame
 {
@@ -11,6 +12,10 @@ namespace MyGame
         protected int Width { get; private set; }
         protected int Height { get; private set; }
 
+        //protected float AspectRatio => Height > Width ? (float)Width / (float)Height : (float)Height / (float)Width;
+        protected float AspectRatio => (float)Width / (float)Height;
+        protected float InverseAspectRatio => (float)Height / (float)Width;
+
         public Application(string title)
         {
             _title = title;
@@ -21,11 +26,18 @@ namespace MyGame
             Initialize();
             Load();
 
-            while (!Window!.IsClosing)
+            bool running = true;
+            while (!Window!.IsClosing && running)
             {
                 Glfw.PollEvents();
 
-                Update();
+                var escape = Glfw.GetKey(Window, Keys.Escape);
+                if (escape == InputState.Press)
+                    running = false;
+
+                Glfw.GetCursorPosition(Window, out double mouseX, out double mouseY);
+
+                Update((float)mouseX, (float)mouseY);
                 Render();
             }
         }
@@ -41,8 +53,8 @@ namespace MyGame
                 }
 
                 var videoMode = Glfw.GetVideoMode(Glfw.PrimaryMonitor);
-                Width = (int)(videoMode.Width * 0.9f);
-                Height = (int)(videoMode.Height * 0.9f);
+                Width = (int)(videoMode.Width * 0.5f);
+                Height = (int)(videoMode.Height * 0.5f);
 
                 Glfw.WindowHint(Hint.ScaleToMonitor, false);
                 Glfw.WindowHint(Hint.ClientApi, ClientApi.None);
@@ -52,7 +64,6 @@ namespace MyGame
                 int windowLeft = videoMode.Width / 2 - Width / 2;
                 int windowTop = videoMode.Height / 2 - Height / 2;
                 Glfw.SetWindowPosition(Window, windowLeft, windowTop);
-
                 Glfw.SetWindowSizeCallback(Window, ResizeCallback);
             }
             catch (System.Exception ex)
@@ -79,7 +90,7 @@ namespace MyGame
         protected virtual void Render()
         { }
 
-        protected virtual void Update()
+        protected virtual void Update(float mouseX, float mouseY)
         { }
 
         private void ResizeCallback(IntPtr window, int width, int height)

@@ -10,17 +10,36 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="glfw-net" Version="3.3.1" />
-    <PackageReference Include="Vortice.D3DCompiler" Version="2.1.4-beta" />
-    <PackageReference Include="Vortice.Direct3D11" Version="2.1.2" />
-    <PackageReference Include="Vortice.Mathematics" Version="1.4.8" />
+    <Compile Remove="Bindable\**" />
+    <EmbeddedResource Remove="Bindable\**" />
+    <None Remove="Bindable\**" />
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="assets\shaders\main.ps.hlsl">
+    <Compile Remove="HelloD3D11.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="glfw-net" Version="3.3.1" />
+    <PackageReference Include="Vortice.D3DCompiler" Version="3.2.1-beta" />
+    <PackageReference Include="Vortice.Direct3D11" Version="3.2.1-beta" />
+    <PackageReference Include="Vortice.Mathematics" Version="1.6.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="assets\shaders\main.both.hlsl">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="assets\shaders\main.vs.hlsl">
+    <None Update="assets\shaders\blendcolors.ps.hlsl">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="assets\shaders\blendcolors.vs.hlsl">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="assets\shaders\solidcolors.ps.hlsl">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="assets\shaders\solidcolors.vs.hlsl">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="glfw.dll">
