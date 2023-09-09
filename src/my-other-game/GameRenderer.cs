@@ -1,145 +1,274 @@
 ﻿using System.Diagnostics;
 using System.Drawing;
-using Vortice.DCommon;
+using System.Numerics;
 using Vortice.Direct3D11;
 using Vortice.DXGI;
 using Vortice.Mathematics;
 using Vortice.WIC;
-using PixelFormat = Vortice.WIC.PixelFormat;
+using static MyOtherGame.ConstantBuffers;
+using static MyOtherGame.GameObjects;
+using static MyOtherGame.Meshes;
 
-namespace MyGame.Drawable;
+namespace MyOtherGame;
 
-internal static class Effects
+internal class GameRenderer
 {
-    #region solid colors
+    private readonly DeviceResources _deviceResources;
 
-    public unsafe class SolidColors
+    // ??
+    private Simple3DGame _game;
+
+    private ID3D11Buffer _constantBufferNeverChanges;
+    private ID3D11Buffer _constantBufferChangeOnResize;
+    private ID3D11Buffer _constantBufferChangesEveryFrame;
+    private ID3D11Buffer _constantBufferChangesEveryPrim;
+    private ID3D11SamplerState _samplerLinear;
+    private ID3D11VertexShader _vertexShader;
+    private ID3D11VertexShader _vertexShaderFlat;
+    private ID3D11PixelShader _pixelShader;
+    private ID3D11PixelShader _pixelShaderFlat;
+    private ID3D11InputLayout _vertexLayout;
+
+    private ID3D11ShaderResourceView _sphereTexture;
+    private ID3D11ShaderResourceView _cylinderTexture;
+    private ID3D11ShaderResourceView _ceilingTexture;
+    private ID3D11ShaderResourceView _floorTexture;
+    private ID3D11ShaderResourceView _wallsTexture;
+
+    public GameRenderer(DeviceResources deviceResources)
     {
-        private static SolidColors _instance;
+        _deviceResources = deviceResources;
 
-        public static SolidColors GetInstance(ID3D11Device device)
+        CreateDeviceDependentResources();
+        CreateWindowSizeDependentResources();
+    }
+
+    public void CreateDeviceDependentResources()
+    {
+
+    }
+
+    public void CreateWindowSizeDependentResources()
+    {
+        var context = _deviceResources.DeviceContext;
+        var renderTargetSize = _deviceResources.RenderTargetSize;
+
+        if (_game != null)
         {
-            _instance ??= new SolidColors(device);
-            return _instance;
-        }
+            _game.Camera.UpdateAspectRatio(renderTargetSize.Width / (float)renderTargetSize.Height);
 
-        public ID3D11Buffer ColorBuffer { get; private set; }
-
-        public ID3D11VertexShader VertexShader { get; private set; }
-        public ID3D11PixelShader PixelShader { get; private set; }
-
-        public ID3D11InputLayout Layout { get; private set; }
-
-        public SolidColors(ID3D11Device device)
-        {
-            Span<Color4> colors = stackalloc Color4[]
-            {
-                new Color4(1.0f, 0.0f, 0.0f, 1.0f),
-                new Color4(0.0f, 1.0f, 0.0f, 1.0f),
-                new Color4(0.0f, 0.0f, 1.0f, 1.0f),
-                new Color4(1.0f, 1.0f, 0.0f, 1.0f),
-                new Color4(1.0f, 0.0f, 1.0f, 1.0f),
-                new Color4(0.0f, 1.0f, 1.0f, 1.0f)
-            };
-            ColorBuffer = device.CreateBuffer(colors, BindFlags.ConstantBuffer);
-
-            var vertexShaderBlob = ShaderCompiler.CompileShader("assets/shaders/solidcolors.vs.hlsl", "Main", "vs_5_0");
-            VertexShader = device.CreateVertexShader(vertexShaderBlob);
-
-            var pixelShaderBlob = ShaderCompiler.CompileShader("assets/shaders/solidcolors.ps.hlsl", "Main", "ps_5_0");
-            PixelShader = device.CreatePixelShader(pixelShaderBlob);
-
-            var inputLayoutDescriptor = new InputElementDescription[]
-            {
-                new InputElementDescription("POSITION", 0, Format.R32G32B32_Float, 0, 0, InputClassification.PerVertexData, 0),
-            };
-            Layout = device.CreateInputLayout(inputLayoutDescriptor, vertexShaderBlob);
+            // update 'change on resize' constant buffer
+            ConstantBufferChangeOnResize changesOnResizeBuffer = new ConstantBufferChangeOnResize(_game.Camera.ProjectionMatrix);
+            context.UpdateSubresource(changesOnResizeBuffer, _constantBufferChangeOnResize);
         }
     }
 
-    #endregion
-
-    #region blend colors
-
-    public unsafe class BlendColors
+    public void CreateGameDeviceResources(Simple3DGame game)
     {
-        private static BlendColors _instance;
+        _game = game;
 
-        public static BlendColors GetInstance(ID3D11Device device)
+        var device = _deviceResources.Device;
+
+        // create the constant buffers
+        // never change buffer
+        unsafe
         {
-            _instance ??= new BlendColors(device);
-            return _instance;
+            _constantBufferNeverChanges = device.CreateBuffer(
+                (sizeof(ConstantBufferNeverChanges) + 15) / 16 * 16,
+                BindFlags.ConstantBuffer,
+                ResourceUsage.Default,
+                CpuAccessFlags.None);
+
+            _constantBufferChangeOnResize = device.CreateBuffer(
+                (sizeof(ConstantBufferChangeOnResize) + 15) / 16 * 16,
+                BindFlags.ConstantBuffer,
+                ResourceUsage.Default,
+                CpuAccessFlags.None);
+
+            _constantBufferChangesEveryFrame = device.CreateBuffer(
+                (sizeof(ConstantBufferChangesEveryFrame) + 15) / 16 * 16,
+                BindFlags.ConstantBuffer,
+                ResourceUsage.Default,
+                CpuAccessFlags.None);
+
+            _constantBufferChangesEveryPrim = device.CreateBuffer(
+                (sizeof(ConstantBufferChangesEveryPrim) + 15) / 16 * 16,
+                BindFlags.ConstantBuffer,
+                ResourceUsage.Default,
+                CpuAccessFlags.None);
         }
 
-        public ID3D11VertexShader VertexShader { get; private set; }
-        public ID3D11PixelShader PixelShader { get; private set; }
+        // sampler
+        var samplerDescription = new SamplerDescription(
+            Filter.MinMagMipLinear,
+            TextureAddressMode.Wrap,
+            TextureAddressMode.Wrap,
+            TextureAddressMode.Wrap,
+            0,
+            1,
+            ComparisonFunction.Never,
+            0,
+            float.MaxValue
+        );
+        _samplerLinear = device.CreateSamplerState(samplerDescription);
 
-        public ID3D11InputLayout Layout { get; private set; }
+        // shaders
+        var vertexShaderBlob = ShaderCompiler.CompileShader("assets/shaders/VertexShader.hlsl", "main", "vs_5_0");
+        _vertexShader = device.CreateVertexShader(vertexShaderBlob);
+        _vertexLayout = device.CreateInputLayout(PNTVertexLayout, vertexShaderBlob);
 
-        public BlendColors(ID3D11Device device)
+        var pixelShaderBlob = ShaderCompiler.CompileShader("assets/shaders/PixelShader.hlsl", "main", "ps_5_0");
+        _pixelShader = device.CreatePixelShader(pixelShaderBlob);
+
+        vertexShaderBlob = ShaderCompiler.CompileShader("assets/shaders/VertexShaderFlat.hlsl", "main", "vs_5_0");
+        _vertexShaderFlat = device.CreateVertexShader(vertexShaderBlob);
+
+        pixelShaderBlob = ShaderCompiler.CompileShader("assets/shaders/PixelShaderFlat.hlsl", "main", "ps_5_0");
+        _pixelShaderFlat = device.CreatePixelShader(pixelShaderBlob);
+
+        // textures
+        // make sure the previous versions if any of the textures are released.
+        _sphereTexture = null;
+        _cylinderTexture = null;
+        _ceilingTexture = null;
+        _floorTexture = null;
+        _wallsTexture = null;
+
+        var texture = LoadTexture("assets/imgs/seafloor.dds", device);
+        _sphereTexture = device.CreateShaderResourceView(texture);
+
+        texture = LoadTexture("assets/imgs/metal_texture.dds", device);
+        _cylinderTexture = device.CreateShaderResourceView(texture);
+
+        texture = LoadTexture("assets/imgs/cellceiling.dds", device);
+        _ceilingTexture = device.CreateShaderResourceView(texture);
+
+        texture = LoadTexture("assets/imgs/cellfloor.dds", device);
+        _floorTexture = device.CreateShaderResourceView(texture);
+
+        texture = LoadTexture("assets/imgs/cellwall.dds", device);
+        _wallsTexture = device.CreateShaderResourceView(texture);
+    }
+
+    public void FinalizeCreateGameDeviceResources()
+    {
+        // all asynchronously loaded resources have completed loading.
+        // now associate all the resources with the appropriate game objects.
+        // this method is expected to run in the same thread as the GameRenderer
+        // was created. all work will happen behind the "Loading ..." screen after the
+        // main loop has been entered.
+
+        // initialize the constant buffer with the light positions
+        // these are handled here to ensure that the d3dContext is only
+        // used in one thread.
+
+        var device = _deviceResources.Device;
+
+        var constantBufferNeverChanges = new ConstantBufferNeverChanges(
+            new Vector4(3.5f, 2.5f, 5.5f, 1.0f),
+            new Vector4(3.5f, 2.5f, -5.5f, 1.0f),
+            new Vector4(-3.5f, 2.5f, -5.5f, 1.0f),
+            new Vector4(3.5f, 2.5f, 5.5f, 1.0f),
+            new Vector4(0.25f, 0.25f, 0.25f, 1.0f)
+        );
+        _deviceResources.DeviceContext.UpdateSubresource(constantBufferNeverChanges, _constantBufferNeverChanges);
+
+        // meshes
+        MeshObject cylinderMesh = new CylinderMesh(device, 26);
+        MeshObject targetMesh = new FaceMesh(device);
+        MeshObject sphereMesh = new SphereMesh(device, 26);
+
+        var cylinderMaterial = new Material(
+            new Vector4(0.8f, 0.8f, 0.8f, .5f),
+            new Vector4(0.8f, 0.8f, 0.8f, .5f),
+            new Vector4(1.0f, 1.0f, 1.0f, 1.0f),
+            15.0f,
+            _cylinderTexture,
+            _vertexShader,
+            _pixelShader
+        );
+        var sphereMaterial = new Material(
+            new Vector4(0.8f, 0.4f, 0.0f, 1.0f),
+            new Vector4(0.8f, 0.4f, 0.0f, 1.0f),
+            new Vector4(1.0f, 1.0f, 1.0f, 1.0f),
+            50.0f,
+            _sphereTexture,
+            _vertexShader,
+            _pixelShader
+        );
+
+        foreach (var renderObject in _game.RenderObjects)
         {
-            var vertexShaderBlob = ShaderCompiler.CompileShader("assets/shaders/blendcolors.vs.hlsl", "Main", "vs_5_0");
-            VertexShader = device.CreateVertexShader(vertexShaderBlob);
-
-            var pixelShaderBlob = ShaderCompiler.CompileShader("assets/shaders/blendcolors.ps.hlsl", "Main", "ps_5_0");
-            PixelShader = device.CreatePixelShader(pixelShaderBlob);
-
-            var inputLayoutDescriptor = new InputElementDescription[]
+            if (renderObject.TargetId == TargetId.WorldFloor)
             {
-                new InputElementDescription("POSITION", 0, Format.R32G32B32_Float, 0, 0, InputClassification.PerVertexData, 0),
-                new InputElementDescription("COLOR", 0, Format.R32G32B32_Float, 12, 0, InputClassification.PerVertexData, 0),
-            };
-            Layout = device.CreateInputLayout(inputLayoutDescriptor, vertexShaderBlob);
+                renderObject.Material = new Material(
+                    new Vector4(0.5f, 0.5f, 0.5f, 1.0f),
+                    new Vector4(0.8f, 0.8f, 0.8f, 1.0f),
+                    new Vector4(0.3f, 0.3f, 0.3f, 1.0f),
+                    150.0f,
+                    _floorTexture,
+                    _vertexShaderFlat,
+                    _pixelShaderFlat);
+                renderObject.Mesh = new WorldFloorMesh(device);
+            }
+            else if (renderObject is CylinderObject)
+            {
+                renderObject.Mesh = cylinderMesh;
+                renderObject.Material = cylinderMaterial;
+            }
+            else if (renderObject is SphereObject)
+            {
+                renderObject.Mesh = sphereMesh;
+                renderObject.Material = sphereMaterial;
+            }
+        }
+
+        var size = _deviceResources.RenderTargetSize;
+        _game.Camera.SetProjParams(
+            MathF.PI / 2.0f,
+            size.Width / (float)size.Height,
+            0.01f,
+            100.0f);
+    }
+
+    public void Render()
+    {
+        Color4 cleanColor = new Color4(255, 127, 127);
+
+        var d3dContext = _deviceResources.DeviceContext;
+        var renderTargetView = _deviceResources.RenderTargetView;
+        var depthStencilView = _deviceResources.DepthStencilView;
+
+        //d3dContext.ClearRenderTargetView(renderTargetView, cleanColor);
+        d3dContext.OMSetRenderTargets(renderTargetView, depthStencilView);
+        d3dContext.ClearDepthStencilView(depthStencilView, DepthStencilClearFlags.Depth, 1.0f, 0);
+
+        var constantBufferChangesEveryFrame = new ConstantBufferChangesEveryFrame(_game.Camera.ViewMatrix);
+        d3dContext.UpdateSubresource(constantBufferChangesEveryFrame, _constantBufferChangesEveryFrame);
+
+        d3dContext.IASetInputLayout(_vertexLayout);
+        d3dContext.VSSetConstantBuffers(0, 4,
+            new ID3D11Buffer[] {
+                _constantBufferNeverChanges,
+                _constantBufferChangeOnResize,
+                _constantBufferChangesEveryFrame,
+                _constantBufferChangesEveryPrim
+            });
+
+        d3dContext.PSSetConstantBuffers(2, 2,
+            new ID3D11Buffer[] {
+                _constantBufferChangesEveryFrame,
+                _constantBufferChangesEveryPrim
+            });
+        d3dContext.PSSetSampler(0, _samplerLinear);
+
+        foreach (var renderObject in _game.RenderObjects)
+        {
+            renderObject.Render(d3dContext, _constantBufferChangesEveryPrim);
         }
     }
 
-    #endregion
-
-    #region textured
-
-    //public unsafe class Textured
-    //{
-    //    private static Textured _instance;
-
-    //    public static Textured GetInstance(ID3D11Device device)
-    //    {
-    //        _instance ??= new Textured(device);
-    //        return _instance;
-    //    }
-
-    //    public ID3D11Buffer ColorBuffer { get; private set; }
-
-    //    public ID3D11VertexShader VertexShader { get; private set; }
-    //    public ID3D11PixelShader PixelShader { get; private set; }
-
-    //    public ID3D11InputLayout Layout { get; private set; }
-
-    //    public SolidColors(ID3D11Device device)
-    //    {
-    //        Span<Color4> colors = stackalloc Color4[]
-    //        {
-    //            new Color4(1.0f, 0.0f, 0.0f, 1.0f),
-    //            new Color4(0.0f, 1.0f, 0.0f, 1.0f),
-    //            new Color4(0.0f, 0.0f, 1.0f, 1.0f),
-    //            new Color4(1.0f, 1.0f, 0.0f, 1.0f),
-    //            new Color4(1.0f, 0.0f, 1.0f, 1.0f),
-    //            new Color4(0.0f, 1.0f, 1.0f, 1.0f)
-    //        };
-    //        ColorBuffer = device.CreateBuffer(colors, BindFlags.ConstantBuffer);
-
-    //        var vertexShaderBlob = ShaderCompiler.CompileShader("assets/shaders/solidcolors.vs.hlsl", "Main", "vs_5_0");
-    //        VertexShader = device.CreateVertexShader(vertexShaderBlob);
-
-    //        var pixelShaderBlob = ShaderCompiler.CompileShader("assets/shaders/solidcolors.ps.hlsl", "Main", "ps_5_0");
-    //        PixelShader = device.CreatePixelShader(pixelShaderBlob);
-
-    //        var inputLayoutDescriptor = new InputElementDescription[]
-    //        {
-    //            new InputElementDescription("POSITION", 0, Format.R32G32B32_Float, 0, 0, InputClassification.PerVertexData, 0),
-    //        };
-    //        Layout = device.CreateInputLayout(inputLayoutDescriptor, vertexShaderBlob);
-    //    }
-    //}
+    #region load-textures
 
     private static readonly Dictionary<Guid, Guid> s_WICConvert = new()
     {
@@ -201,8 +330,10 @@ internal static class Effects
 
     private static ID3D11Texture2D? LoadTexture(string fileName, ID3D11Device device, int width = 0, int height = 0)
     {
-        string assetsPath = Path.Combine(AppContext.BaseDirectory, "Textures");
-        string textureFile = Path.Combine(assetsPath, fileName);
+        //string assetsPath = Path.Combine(AppContext.BaseDirectory, "Textures");
+        //string textureFile = Path.Combine(assetsPath, fileName);
+
+        string textureFile = Path.Combine(AppContext.BaseDirectory, fileName);
 
         using var wicFactory = new IWICImagingFactory();
         using IWICBitmapDecoder decoder = wicFactory.CreateDecoderFromFileName(textureFile);

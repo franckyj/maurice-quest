@@ -1,23 +1,13 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net6.0</TargetFramework>
-    <RootNamespace>MyGame</RootNamespace>
+    <TargetFramework>net7.0</TargetFramework>
+    <RootNamespace>MyOtherGame</RootNamespace>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
   </PropertyGroup>
-
-  <ItemGroup>
-    <Compile Remove="Bindable\**" />
-    <EmbeddedResource Remove="Bindable\**" />
-    <None Remove="Bindable\**" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Compile Remove="HelloD3D11.cs" />
-  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="glfw-net" Version="3.3.1" />
@@ -28,27 +18,44 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="assets\imgs\owl.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="assets\shaders\main.both.hlsl">
+    <None Update="assets\imgs\cellceiling.dds">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="assets\shaders\blendcolors.ps.hlsl">
+    <None Update="assets\imgs\cellfloor.dds">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="assets\shaders\blendcolors.vs.hlsl">
+    <None Update="assets\imgs\cellwall.dds">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="assets\shaders\solidcolors.ps.hlsl">
+    <None Update="assets\imgs\metal_texture.dds">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="assets\shaders\solidcolors.vs.hlsl">
+    <None Update="assets\imgs\seafloor.dds">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="assets\shaders\ConstantBuffers.hlsli">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="assets\shaders\PixelShader.hlsl">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="assets\shaders\PixelShaderFlat.hlsl">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="assets\shaders\VertexShader.hlsl">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="assets\shaders\VertexShaderFlat.hlsl">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="glfw.dll">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="assets\imgs\" />
+    <Folder Include="assets\shaders\" />
   </ItemGroup>
 
 </Project>

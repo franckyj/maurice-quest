@@ -1,12 +1,14 @@
-﻿using System.Runtime.InteropServices;
-using GLFW;
+﻿using GLFW;
 
-namespace MyGame
+namespace MyOtherGame
 {
     internal class Application : IDisposable
     {
         private string _title;
         private bool _disposed;
+
+        private DeviceResources _deviceResources;
+        private GameMain _game;
 
         protected NativeWindow? Window { get; private set; }
         protected int Width { get; private set; }
@@ -25,21 +27,22 @@ namespace MyGame
             Initialize();
             Load();
 
-            bool running = true;
-            while (!Window!.IsClosing && running)
-            {
-                Glfw.PollEvents();
+            _game.Run();
 
-                var escape = Glfw.GetKey(Window, Keys.Escape);
-                if (escape == InputState.Press)
-                    running = false;
+            //bool running = true;
+            //while (!Window!.IsClosing && running)
+            //{
+            //    Glfw.PollEvents();
 
-                Glfw.GetCursorPosition(Window, out double mouseX, out double mouseY);
+            //    var escape = Glfw.GetKey(Window, Keys.Escape);
+            //    if (escape == InputState.Press)
+            //        running = false;
 
-                Update((float)mouseX, (float)mouseY);
-                //Update(0f, 0f);
-                Render();
-            }
+            //    Glfw.GetCursorPosition(Window, out double mouseX, out double mouseY);
+
+            //    Update((float)mouseX, (float)mouseY);
+            //    Render();
+            //}
         }
 
         protected virtual void Initialize()
@@ -65,6 +68,12 @@ namespace MyGame
                 int windowTop = videoMode.Height / 2 - Height / 2;
                 Glfw.SetWindowPosition(Window, windowLeft, windowTop);
                 Glfw.SetWindowSizeCallback(Window, ResizeCallback);
+                Glfw.SetCloseCallback(Window, CloseCallback);
+
+                // initialize the game main + device resources
+                _deviceResources = new DeviceResources();
+                _deviceResources.SetWindow(Window.Hwnd, Height, Width);
+                _game = new GameMain(_deviceResources, new GameRenderer(_deviceResources));
             }
             catch (System.Exception ex)
             {
@@ -87,17 +96,22 @@ namespace MyGame
             //Console.WriteLine("Window has been resized!");
         }
 
-        protected virtual void Render()
-        { }
+        //protected virtual void Render()
+        //{ }
 
-        protected virtual void Update(float mouseX, float mouseY)
-        { }
+        //protected virtual void Update(float mouseX, float mouseY)
+        //{ }
 
         private void ResizeCallback(IntPtr window, int width, int height)
         {
             Width = width;
             Height = height;
             OnResize();
+        }
+
+        private void CloseCallback(IntPtr window)
+        {
+            _game.Stop();
         }
 
         protected virtual void Dispose(bool disposing)

@@ -1,13 +1,12 @@
 ﻿using System.Numerics;
-using MyGame.Drawable;
 using Vortice.Direct3D;
 using Vortice.Direct3D11;
 using Vortice.DXGI;
 using Vortice.Mathematics;
 
-namespace MyGame;
+namespace MyOtherGame;
 
-internal unsafe sealed class D3D11Application : Application
+internal unsafe sealed class GameMain2 : Application
 {
     private static readonly FeatureLevel[] _featureLevels;
 
@@ -26,17 +25,17 @@ internal unsafe sealed class D3D11Application : Application
     private Matrix4x4 _viewProjectionMatrix;
     private readonly Color4 _clearColor;
 
-    private IDrawable[] _shapes;
+    //private IDrawable[] _shapes;
 
-    static D3D11Application()
+    static GameMain2()
     {
         _featureLevels = new[]
         {
-                FeatureLevel.Level_11_0
-            };
+            FeatureLevel.Level_11_0
+        };
     }
 
-    public D3D11Application(string title) : base(title)
+    public GameMain2(string title) : base(title)
     {
         _clearColor = new Color4(0.2f, 0.2f, 0.2f, 1.0f);
     }
@@ -56,38 +55,38 @@ internal unsafe sealed class D3D11Application : Application
         _swapchain.Present(1, PresentFlags.None);
     }
 
-    protected override void Update(float mouseX, float mouseY)
-    {
-        base.Update(mouseX, mouseY);
+    //protected override void Update(float mouseX, float mouseY)
+    //{
+    //    base.Update(mouseX, mouseY);
 
-        //var dt = 1.0f / 60.0f / 2.0f;
-        var dt = 1.0f / 60.0f;
-        for (int i = 0; i < _shapes.Length; i++)
-        {
-            _shapes[i].Update(
-                dt,
-                _viewProjectionMatrix,
-                _deviceContext,
-                mouseX,
-                mouseY,
-                Width,
-                Height);
-        }
-    }
+    //    //var dt = 1.0f / 60.0f / 2.0f;
+    //    var dt = 1.0f / 60.0f;
+    //    //for (int i = 0; i < _shapes.Length; i++)
+    //    //{
+    //    //    _shapes[i].Update(
+    //    //        dt,
+    //    //        _viewProjectionMatrix,
+    //    //        _deviceContext,
+    //    //        mouseX,
+    //    //        mouseY,
+    //    //        Width,
+    //    //        Height);
+    //    //}
+    //}
 
-    protected override void Render()
-    {
-        BeginFrame();
+    //protected override void Render()
+    //{
+    //    BeginFrame();
 
-        for (int i = 0; i < _shapes.Length; i++)
-        {
-            _shapes[i].Draw(_deviceContext);
-        }
+    //    //for (int i = 0; i < _shapes.Length; i++)
+    //    //{
+    //    //    _shapes[i].Draw(_deviceContext);
+    //    //}
 
-        EndFrame();
+    //    EndFrame();
 
-        base.Render();
-    }
+    //    base.Render();
+    //}
 
     protected override void Initialize()
     {
@@ -126,7 +125,7 @@ internal unsafe sealed class D3D11Application : Application
         _deviceContext.RSSetState(_rasterizerState);
 
         Matrix4x4 view = Matrix4x4.CreateLookAt(new Vector3(0, 0, 30), new Vector3(0, 0, 0), Vector3.UnitY);
-        Matrix4x4 projection = Matrix4x4.CreatePerspectiveFieldOfView((float)Math.PI / 4, AspectRatio, 1.0f, 100.0f);
+        Matrix4x4 projection = Matrix4x4.CreatePerspectiveFieldOfView(MathF.PI / 4, AspectRatio, 1.0f, 100.0f);
         _viewProjectionMatrix = Matrix4x4.Multiply(view, projection);
 
         _depthState = _device.CreateDepthStencilState(new DepthStencilDescription()
@@ -137,20 +136,20 @@ internal unsafe sealed class D3D11Application : Application
         });
         _deviceContext.OMSetDepthStencilState(_depthState);
 
-        const int shapeCount = 80;
-        _shapes = new IDrawable[shapeCount];
+        //const int shapeCount = 80;
+        //_shapes = new IDrawable[shapeCount];
 
-        var cubeCount = shapeCount / 2;
-        for (int i = 0; i < cubeCount; ++i)
-        {
-            _shapes[i] = new Drawable.Box(new Vector3(0, 0, 0), _device, i);
-        }
+        //var cubeCount = shapeCount / 2;
+        //for (int i = 0; i < cubeCount; ++i)
+        //{
+        //    _shapes[i] = new Drawable.Box(new Vector3(0, 0, 0), _device, i);
+        //}
 
-        var pyramidCount = shapeCount - cubeCount;
-        for (int i = cubeCount; i < cubeCount + pyramidCount; ++i)
-        {
-            _shapes[i] = new Drawable.Pyramid(new Vector3(0, 0, 0), _device, i);
-        }
+        //var pyramidCount = shapeCount - cubeCount;
+        //for (int i = cubeCount; i < cubeCount + pyramidCount; ++i)
+        //{
+        //    _shapes[i] = new Drawable.Pyramid(new Vector3(0, 0, 0), _device, i);
+        //}
     }
 
     protected override void OnResize()
