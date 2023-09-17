@@ -232,16 +232,15 @@ namespace MyGame
         {
             base.Load();
 
-            (_vertexShader, _vertexShaderBlob) = CreateVertexShader("assets/shaders/main.vs.hlsl", "Main");
-            _pixelShader = CreatePixelShader("assets/shaders/main.ps.hlsl", "Main");
-
             //(_vertexShader, _vertexShaderBlob) = CreateVertexShader("assets/shaders/main.both.hlsl", "VSMain");
             //_pixelShader = CreatePixelShader("assets/shaders/main.both.hlsl", "PSMain");
 
+            (_vertexShader, _vertexShaderBlob) = CreateVertexShader("assets/shaders/solidcolors.vs.hlsl", "Main");
+            _pixelShader = CreatePixelShader("assets/shaders/solidcolors.ps.hlsl", "Main");
+
             var inputLayoutDescriptor = new[]
             {
-                new InputElementDescription("POSITION", 0, Format.R32G32B32_Float, 0, 0, InputClassification.PerVertexData, 0),
-                // new InputElementDescription("COLOR", 0, Format.R32G32B32_Float, 12, 0, InputClassification.PerVertexData, 0),
+                new InputElementDescription("POSITION", 0, Format.R32G32B32_Float, 0, 0, InputClassification.PerVertexData, 0)
             };
             _inputLayout = _device.CreateInputLayout(inputLayoutDescriptor, _vertexShaderBlob);
             //_inputLayout = _device.CreateInputLayout(VertexPositionNormalTexture.InputElements, _vertexShaderBlob);
@@ -340,7 +339,7 @@ namespace MyGame
             var mouseX = (float)_mouseX / (Width / 2.0f) - 1.0f;
             var mouseY = -(float)_mouseY / (Height / 2.0f) + 1.0f;
 
-            DrawCube(0, 0, 0, _angleInRadians);
+            //DrawCube(0, 0, 0, _angleInRadians);
             DrawCube(mouseX, 0.0f, mouseY * 1.5f, -_angleInRadians);
 
             _swapchain.Present(1, PresentFlags.None);
@@ -351,8 +350,8 @@ namespace MyGame
             Matrix4x4 world =
                 Matrix4x4.CreateRotationX(angle) *
                 Matrix4x4.CreateRotationY(angle) *
-                Matrix4x4.CreateRotationZ(angle * .7f) *
-                Matrix4x4.CreateTranslation(new Vector3(translateX, translateY, translateZ));
+                Matrix4x4.CreateRotationZ(angle * .7f);
+                //* Matrix4x4.CreateTranslation(new Vector3(translateX, translateY, translateZ));
             Matrix4x4 view = Matrix4x4.CreateLookAt(new Vector3(0, 0, 5), new Vector3(0, 0, 0), Vector3.UnitY);
             Matrix4x4 projection = Matrix4x4.CreatePerspectiveFieldOfView((float)Math.PI / 4, AspectRatio, 1.0f, 100.0f);
             Matrix4x4 viewProjection = Matrix4x4.Multiply(view, projection);
@@ -384,7 +383,7 @@ namespace MyGame
             _deviceContext.PSSetConstantBuffer(0, _colorBuffer);
 
             // output merger
-            _deviceContext.OMSetRenderTargets(1, new[] { _renderTarget }, _depthView);
+            _deviceContext.OMSetRenderTargets(_renderTarget, _depthView);
 
             _deviceContext.DrawIndexed(36, 0, 0);
         }

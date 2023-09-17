@@ -1,4 +1,5 @@
 ﻿using System.Numerics;
+using System.Runtime.CompilerServices;
 using Vortice.Direct3D;
 using Vortice.Direct3D11;
 using static MyOtherGame.Vertices;
@@ -18,16 +19,14 @@ internal static class Meshes
         {
             if (VertexBuffer == null || IndexBuffer == null) return;
 
-            unsafe
-            {
-                int stride = sizeof(PNTVertex);
-                int offset = 0;
+            int stride = Unsafe.SizeOf<PNTVertex>();
+            int offset = 0;
 
-                context.IASetVertexBuffer(0, VertexBuffer, stride, offset);
-                context.IASetIndexBuffer(IndexBuffer, Vortice.DXGI.Format.R16_UInt, 0);
-                context.IASetPrimitiveTopology(PrimitiveTopology.TriangleList);
-                context.DrawIndexed(IndexCount, 0, 0);
-            }
+            context.IASetVertexBuffer(0, VertexBuffer, stride, offset);
+
+            context.IASetIndexBuffer(IndexBuffer, Vortice.DXGI.Format.R16_UInt, 0);
+            context.IASetPrimitiveTopology(PrimitiveTopology.TriangleList);
+            context.DrawIndexed(IndexCount, 0, 0);
         }
     }
 
@@ -222,30 +221,25 @@ internal static class Meshes
     {
         public FaceMesh(in ID3D11Device device)
         {
-            var vertices = new PNTVertex[]
+            Span<PNTVertex> vertices = stackalloc PNTVertex[4]
             {
                 new PNTVertex(new Vector3(0.0f, 0.0f, 0.0f), new Vector3(0.0f, 0.0f, 1.0f), new Vector2(1.0f, 1.0f)),
                 new PNTVertex(new Vector3(1.0f, 0.0f, 0.0f), new Vector3(0.0f, 0.0f, 1.0f), new Vector2(0.0f, 1.0f)),
                 new PNTVertex(new Vector3(1.0f, 1.0f, 0.0f), new Vector3(0.0f, 0.0f, 1.0f), new Vector2(0.0f, 0.0f)),
                 new PNTVertex(new Vector3(0.0f, 1.0f, 0.0f), new Vector3(0.0f, 0.0f, 1.0f), new Vector2(1.0f, 0.0f))
             };
-
-            unsafe
-            {
-                Span<int> indices = stackalloc int[]
-                {
-                    0, 1, 2,
-                    0, 2, 3,
-                    0, 2, 1,
-                    0, 3, 2
-                };
-                IndexBuffer = device.CreateBuffer(indices, BindFlags.IndexBuffer);
-            }
-
             VertexCount = 4;
-            IndexCount = 12;
-
             VertexBuffer = device.CreateBuffer(vertices, BindFlags.VertexBuffer);
+
+            Span<ushort> indices = stackalloc ushort[]
+            {
+                0, 1, 2,
+                0, 2, 3,
+                0, 2, 1,
+                0, 3, 2
+            };
+            IndexCount = 12;
+            IndexBuffer = device.CreateBuffer(indices, BindFlags.IndexBuffer);
         }
     }
 
@@ -253,28 +247,55 @@ internal static class Meshes
     {
         public WorldFloorMesh(in ID3D11Device device)
         {
-            var vertices = new PNTVertex[]
+            Span<PNTVertex> vertices = stackalloc PNTVertex[4]
             {
                 new PNTVertex(new Vector3(-4.0f, -3.0f,  6.0f), new Vector3(0.0f, 1.0f, 0.0f), new Vector2(0.0f, 0.0f)),
                 new PNTVertex(new Vector3( 4.0f, -3.0f,  6.0f), new Vector3(0.0f, 1.0f, 0.0f), new Vector2(1.0f, 0.0f)),
                 new PNTVertex(new Vector3(-4.0f, -3.0f, -6.0f), new Vector3(0.0f, 1.0f, 0.0f), new Vector2(0.0f, 1.5f)),
                 new PNTVertex(new Vector3( 4.0f, -3.0f, -6.0f), new Vector3(0.0f, 1.0f, 0.0f), new Vector2(1.0f, 1.5f))
             };
-
-            unsafe
-            {
-                Span<int> indices = stackalloc int[]
-                {
-                    0, 1, 2,
-                    1, 3, 2
-                };
-                IndexBuffer = device.CreateBuffer(indices, BindFlags.IndexBuffer);
-            }
-
             VertexCount = 4;
-            IndexCount = 6;
-
             VertexBuffer = device.CreateBuffer(vertices, BindFlags.VertexBuffer);
+
+            Span<ushort> indices = stackalloc ushort[]
+            {
+                0, 1, 2,
+                1, 3, 2
+            };
+            IndexCount = 6;
+            IndexBuffer = device.CreateBuffer(indices, BindFlags.IndexBuffer);
+        }
+    }
+
+    public class CubeMesh : MeshObject
+    {
+        public CubeMesh(in ID3D11Device device)
+        {
+            Span<PNTVertex> vertices = stackalloc PNTVertex[]
+            {
+                new PNTVertex(new Vector3(-1.0f, -1.0f, 1.0f), Vector3.UnitY, Vector2.UnitX),
+                new PNTVertex(new Vector3(1.0f, -1.0f, 1.0f), Vector3.UnitY, Vector2.UnitX),
+                new PNTVertex(new Vector3(-1.0f, 1.0f, 1.0f), Vector3.UnitY, Vector2.UnitX),
+                new PNTVertex(new Vector3(1.0f, 1.0f, 1.0f), Vector3.UnitY, Vector2.UnitX),
+                new PNTVertex(new Vector3(-1.0f, -1.0f, -1.0f), Vector3.UnitY, Vector2.UnitX),
+                new PNTVertex(new Vector3(1.0f, -1.0f, -1.0f), Vector3.UnitY, Vector2.UnitX),
+                new PNTVertex(new Vector3(-1.0f, 1.0f, -1.0f), Vector3.UnitY, Vector2.UnitX),
+                new PNTVertex(new Vector3(1.0f, 1.0f, -1.0f), Vector3.UnitY, Vector2.UnitX)
+            };
+            VertexCount = vertices.Length;
+            VertexBuffer = device.CreateBuffer(vertices, BindFlags.VertexBuffer);
+
+            Span<ushort> indices = stackalloc ushort[]
+            {
+                0, 2, 1, 2, 3, 1,
+                1, 3, 5, 3, 7, 5,
+                2, 6, 3, 3, 6, 7,
+                4, 5, 7, 4, 7, 6,
+                0, 4, 2, 2, 4, 6,
+                0, 1, 4, 1, 5, 4
+            };
+            IndexCount = indices.Length;
+            IndexBuffer = device.CreateBuffer(indices, BindFlags.IndexBuffer);
         }
     }
 }

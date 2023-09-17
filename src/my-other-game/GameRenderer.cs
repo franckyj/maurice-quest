@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics;
 using System.Drawing;
 using System.Numerics;
+using System.Runtime.CompilerServices;
 using Vortice.Direct3D11;
 using Vortice.DXGI;
 using Vortice.Mathematics;
@@ -58,8 +59,18 @@ internal class GameRenderer
             _game.Camera.UpdateAspectRatio(renderTargetSize.Width / (float)renderTargetSize.Height);
 
             // update 'change on resize' constant buffer
-            ConstantBufferChangeOnResize changesOnResizeBuffer = new ConstantBufferChangeOnResize(_game.Camera.ProjectionMatrix);
+            //ConstantBufferChangeOnResize changesOnResizeBuffer = new ConstantBufferChangeOnResize(_game.Camera.ProjectionMatrix);
+            ConstantBufferChangeOnResize changesOnResizeBuffer = new ConstantBufferChangeOnResize
+            {
+                Projection = _game.Camera.ProjectionMatrix
+            };
             context.UpdateSubresource(changesOnResizeBuffer, _constantBufferChangeOnResize);
+            //unsafe
+            //{
+            //    MappedSubresource mappedResource = context.Map(_constantBufferChangeOnResize, MapMode.WriteDiscard);
+            //    Unsafe.Copy(mappedResource.DataPointer.ToPointer(), ref changesOnResizeBuffer);
+            //    context.Unmap(_constantBufferChangeOnResize, 0);
+            //}
         }
     }
 
@@ -70,33 +81,37 @@ internal class GameRenderer
         var device = _deviceResources.Device;
 
         // create the constant buffers
-        // never change buffer
-        unsafe
-        {
-            _constantBufferNeverChanges = device.CreateBuffer(
-                (sizeof(ConstantBufferNeverChanges) + 15) / 16 * 16,
-                BindFlags.ConstantBuffer,
-                ResourceUsage.Default,
-                CpuAccessFlags.None);
+        var size = (Unsafe.SizeOf<ConstantBufferNeverChanges>() + 15) / 16 * 16;
+        //var size = Unsafe.SizeOf<ConstantBufferNeverChanges>();
+        _constantBufferNeverChanges = device.CreateBuffer(
+            size,
+            BindFlags.ConstantBuffer,
+            ResourceUsage.Default,
+            CpuAccessFlags.None);
 
-            _constantBufferChangeOnResize = device.CreateBuffer(
-                (sizeof(ConstantBufferChangeOnResize) + 15) / 16 * 16,
-                BindFlags.ConstantBuffer,
-                ResourceUsage.Default,
-                CpuAccessFlags.None);
+        size = (Unsafe.SizeOf<ConstantBufferChangeOnResize>() + 15) / 16 * 16;
+        //size = Unsafe.SizeOf<ConstantBufferChangeOnResize>();
+        _constantBufferChangeOnResize = device.CreateBuffer(
+            size,
+            BindFlags.ConstantBuffer,
+            ResourceUsage.Default,
+            CpuAccessFlags.None);
 
-            _constantBufferChangesEveryFrame = device.CreateBuffer(
-                (sizeof(ConstantBufferChangesEveryFrame) + 15) / 16 * 16,
-                BindFlags.ConstantBuffer,
-                ResourceUsage.Default,
-                CpuAccessFlags.None);
+        size = (Unsafe.SizeOf<ConstantBufferChangesEveryFrame>() + 15) / 16 * 16;
+        //size = Unsafe.SizeOf<ConstantBufferChangesEveryFrame>();
+        _constantBufferChangesEveryFrame = device.CreateBuffer(
+            size,
+            BindFlags.ConstantBuffer,
+            ResourceUsage.Default,
+            CpuAccessFlags.None);
 
-            _constantBufferChangesEveryPrim = device.CreateBuffer(
-                (sizeof(ConstantBufferChangesEveryPrim) + 15) / 16 * 16,
-                BindFlags.ConstantBuffer,
-                ResourceUsage.Default,
-                CpuAccessFlags.None);
-        }
+        size = (Unsafe.SizeOf<ConstantBufferChangesEveryPrim>() + 15) / 16 * 16;
+        //size = Unsafe.SizeOf<ConstantBufferChangesEveryPrim>();
+        _constantBufferChangesEveryPrim = device.CreateBuffer(
+            size,
+            BindFlags.ConstantBuffer,
+            ResourceUsage.Default,
+            CpuAccessFlags.None);
 
         // sampler
         var samplerDescription = new SamplerDescription(
@@ -164,14 +179,21 @@ internal class GameRenderer
 
         var device = _deviceResources.Device;
 
-        var constantBufferNeverChanges = new ConstantBufferNeverChanges(
-            new Vector4(3.5f, 2.5f, 5.5f, 1.0f),
-            new Vector4(3.5f, 2.5f, -5.5f, 1.0f),
-            new Vector4(-3.5f, 2.5f, -5.5f, 1.0f),
-            new Vector4(3.5f, 2.5f, 5.5f, 1.0f),
-            new Vector4(0.25f, 0.25f, 0.25f, 1.0f)
-        );
+        var constantBufferNeverChanges = new ConstantBufferNeverChanges
+        {
+            LightPosition1 = new Vector4(3.5f, 2.5f, 5.5f, 1.0f),
+            LightPosition2 = new Vector4(3.5f, 2.5f, -5.5f, 1.0f),
+            LightPosition3 = new Vector4(-3.5f, 2.5f, -5.5f, 1.0f),
+            LightPosition4 = new Vector4(3.5f, 2.5f, 5.5f, 1.0f),
+            LightColor = new Vector4(0.25f, 0.25f, 0.25f, 1.0f)
+        };
         _deviceResources.DeviceContext.UpdateSubresource(constantBufferNeverChanges, _constantBufferNeverChanges);
+        //unsafe
+        //{
+        //    MappedSubresource mappedResource = _deviceResources.DeviceContext.Map(_constantBufferNeverChanges, MapMode.Write);
+        //    Unsafe.Copy(mappedResource.DataPointer.ToPointer(), ref constantBufferNeverChanges);
+        //    _deviceResources.DeviceContext.Unmap(_constantBufferNeverChanges, 0);
+        //}
 
         // meshes
         MeshObject cylinderMesh = new CylinderMesh(device, 26);
@@ -189,6 +211,7 @@ internal class GameRenderer
         );
         var sphereMaterial = new Material(
             new Vector4(0.8f, 0.4f, 0.0f, 1.0f),
+            //new Vector4(1.0f, 1.0f, 1.0f, 1.0f),
             new Vector4(0.8f, 0.4f, 0.0f, 1.0f),
             new Vector4(1.0f, 1.0f, 1.0f, 1.0f),
             50.0f,
@@ -219,6 +242,7 @@ internal class GameRenderer
             else if (renderObject is SphereObject)
             {
                 renderObject.Mesh = sphereMesh;
+                //renderObject.Mesh = new CubeMesh(device);
                 renderObject.Material = sphereMaterial;
             }
         }
@@ -229,22 +253,40 @@ internal class GameRenderer
             size.Width / (float)size.Height,
             0.01f,
             100.0f);
+
+        ConstantBufferChangeOnResize changesOnResizeBuffer = new ConstantBufferChangeOnResize
+        {
+            Projection = _game.Camera.ProjectionMatrix
+        };
+        _deviceResources.DeviceContext.UpdateSubresource(changesOnResizeBuffer, _constantBufferChangeOnResize);
     }
 
     public void Render()
     {
-        Color4 cleanColor = new Color4(255, 127, 127);
+        Color4 cleanColor = new Color4(0.2f, 0.2f, 0.2f, 1.0f);
 
         var d3dContext = _deviceResources.DeviceContext;
         var renderTargetView = _deviceResources.RenderTargetView;
         var depthStencilView = _deviceResources.DepthStencilView;
 
-        //d3dContext.ClearRenderTargetView(renderTargetView, cleanColor);
-        d3dContext.OMSetRenderTargets(renderTargetView, depthStencilView);
+        d3dContext.ClearRenderTargetView(renderTargetView, cleanColor);
         d3dContext.ClearDepthStencilView(depthStencilView, DepthStencilClearFlags.Depth, 1.0f, 0);
 
-        var constantBufferChangesEveryFrame = new ConstantBufferChangesEveryFrame(_game.Camera.ViewMatrix);
+        d3dContext.OMSetRenderTargets(renderTargetView, depthStencilView);
+        d3dContext.RSSetViewport(_deviceResources.Viewport);
+
+        //var constantBufferChangesEveryFrame = new ConstantBufferChangesEveryFrame(_game.Camera.ViewMatrix);
+        var constantBufferChangesEveryFrame = new ConstantBufferChangesEveryFrame
+        {
+            View = _game.Camera.ViewMatrix
+        };
         d3dContext.UpdateSubresource(constantBufferChangesEveryFrame, _constantBufferChangesEveryFrame);
+        //unsafe
+        //{
+        //    MappedSubresource mappedResource = d3dContext.Map(_constantBufferChangesEveryFrame, MapMode.WriteDiscard);
+        //    Unsafe.Copy(mappedResource.DataPointer.ToPointer(), ref constantBufferChangesEveryFrame);
+        //    d3dContext.Unmap(_constantBufferChangesEveryFrame, 0);
+        //}
 
         d3dContext.IASetInputLayout(_vertexLayout);
         d3dContext.VSSetConstantBuffers(0, 4,

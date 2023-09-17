@@ -1,4 +1,6 @@
-﻿namespace MyOtherGame;
+﻿using System.Numerics;
+
+namespace MyOtherGame;
 
 public enum GameState
 {

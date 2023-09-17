@@ -55,7 +55,6 @@
 
   <ItemGroup>
     <Folder Include="assets\imgs\" />
-    <Folder Include="assets\shaders\" />
   </ItemGroup>
 
 </Project>

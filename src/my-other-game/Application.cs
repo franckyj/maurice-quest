@@ -112,6 +112,7 @@ namespace MyOtherGame
         private void CloseCallback(IntPtr window)
         {
             _game.Stop();
+            Dispose(true);
         }
 
         protected virtual void Dispose(bool disposing)

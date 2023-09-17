@@ -40,3 +40,10 @@
 
 - seperate 'effects' from 'shape'
   - box: effect = solid vs blend colors, shape = cube vs rectangle vs other
+
+- camera near / far planes are along the camera "look_at" vector
+  - https://stackoverflow.com/questions/58045444/which-axis-is-used-for-the-near-and-far-plane-when-using-the-perspective-camera
+
+- vortice matrices are sent as column major and read as column major by the shader
+  - use pre-mul
+  - P * V * W * v

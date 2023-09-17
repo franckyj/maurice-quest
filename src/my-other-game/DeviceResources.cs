@@ -30,6 +30,7 @@ internal class DeviceResources
     public ID3D11RenderTargetView RenderTargetView => _renderTargetView;
     public Size RenderTargetSize => _renderTargetSize;
     public ID3D11DepthStencilView DepthStencilView => _depthStencilView;
+    public Viewport Viewport => _viewport;
 
     static DeviceResources()
     {
@@ -81,20 +82,8 @@ internal class DeviceResources
         //CreateSwapchain(Window!.Hwnd, Width, Height);
         //CreateSwapchainResources();
 
-        //_rasterizerState = _device.CreateRasterizerState(new RasterizerDescription(CullMode.Back, FillMode.Solid));
-        //_deviceContext.RSSetState(_rasterizerState);
-
-        //Matrix4x4 view = Matrix4x4.CreateLookAt(new Vector3(0, 0, 30), new Vector3(0, 0, 0), Vector3.UnitY);
-        //Matrix4x4 projection = Matrix4x4.CreatePerspectiveFieldOfView((float)Math.PI / 4, AspectRatio, 1.0f, 100.0f);
-        //_viewProjectionMatrix = Matrix4x4.Multiply(view, projection);
-
-        //_depthState = _device.CreateDepthStencilState(new DepthStencilDescription()
-        //{
-        //    DepthEnable = true,
-        //    DepthWriteMask = DepthWriteMask.All,
-        //    DepthFunc = ComparisonFunction.Less
-        //});
-        //_deviceContext.OMSetDepthStencilState(_depthState);
+        var rasterizerState = _device.CreateRasterizerState(new RasterizerDescription(CullMode.Back, FillMode.Solid));
+        _deviceContext.RSSetState(rasterizerState);
     }
 
     public void SetWindow(IntPtr windowHandle, int windowHeight, int windowWidth)
@@ -110,7 +99,6 @@ internal class DeviceResources
         // to sleep until the next VSync. This ensures we don't waste any cycles rendering
         // frames that will never be displayed to the screen
         _swapchain.Present(1, PresentFlags.None);
-
     }
 
     private void CreateWindowSizeDependentResources()
@@ -168,8 +156,10 @@ internal class DeviceResources
             Format = Format.D32_Float,
             ViewDimension = DepthStencilViewDimension.Texture2D
         });
-        _deviceContext.OMSetRenderTargets(1, new[] { _renderTargetView }, _depthStencilView);
+        //_deviceContext.OMSetRenderTargets(1, new[] { _renderTargetView }, _depthStencilView);
         _viewport = new Viewport(_renderTargetSize.Width, _renderTargetSize.Height);
+
+        //_deviceContext.RSSetViewport(_viewport);
     }
 
     private void DestroySwapchainResources()
@@ -235,55 +225,4 @@ internal class DeviceResources
 
         throw new InvalidOperationException("Unable to find a D3D11 adapter");
     }
-
-    /*
-     private:
-        void CreateDeviceIndependentResources();
-        void CreateDeviceResources();
-        void CreateWindowSizeDependentResources();
-        DXGI_MODE_ROTATION ComputeDisplayRotation();
-        void CheckStereoEnabledStatus();
-
-        // Direct3D objects.
-        Microsoft::WRL::ComPtr<ID3D11Device3>           m_d3dDevice;
-        Microsoft::WRL::ComPtr<ID3D11DeviceContext3>    m_d3dContext;
-        Microsoft::WRL::ComPtr<IDXGISwapChain1>         m_swapChain;
-
-        // Direct3D rendering objects. Required for 3D.
-        Microsoft::WRL::ComPtr<ID3D11RenderTargetView>  m_d3dRenderTargetView;
-        Microsoft::WRL::ComPtr<ID3D11RenderTargetView>  m_d3dRenderTargetViewRight;
-        Microsoft::WRL::ComPtr<ID3D11DepthStencilView>  m_d3dDepthStencilView;
-        D3D11_VIEWPORT                                  m_screenViewport;
-
-        // Direct2D drawing components.
-        Microsoft::WRL::ComPtr<ID2D1Factory3>           m_d2dFactory;
-        Microsoft::WRL::ComPtr<ID2D1Device2>            m_d2dDevice;
-        Microsoft::WRL::ComPtr<ID2D1DeviceContext2>     m_d2dContext;
-        Microsoft::WRL::ComPtr<ID2D1Bitmap1>            m_d2dTargetBitmap;
-        Microsoft::WRL::ComPtr<ID2D1Bitmap1>            m_d2dTargetBitmapRight;
-
-        // DirectWrite drawing components.
-        Microsoft::WRL::ComPtr<IDWriteFactory3>         m_dwriteFactory;
-        Microsoft::WRL::ComPtr<IWICImagingFactory2>     m_wicFactory;
-
-        // Cached reference to the Window.
-        Platform::Agile<Windows::UI::Core::CoreWindow>  m_window;
-
-        // Cached device properties.
-        D3D_FEATURE_LEVEL                               m_d3dFeatureLevel;
-        Windows::Foundation::Size                       m_d3dRenderTargetSize;
-        Windows::Foundation::Size                       m_outputSize;
-        Windows::Foundation::Size                       m_logicalSize;
-        Windows::Graphics::Display::DisplayOrientations m_nativeOrientation;
-        Windows::Graphics::Display::DisplayOrientations m_currentOrientation;
-        float                                           m_dpi;
-        bool                                            m_stereoEnabled;
-
-        // Transforms used for display orientation.
-        D2D1::Matrix3x2F                                m_orientationTransform2D;
-        DirectX::XMFLOAT4X4                             m_orientationTransform3D;
-
-        // The IDeviceNotify can be held directly as it owns the DeviceResources.
-        IDeviceNotify*                                  m_deviceNotify;
-     */
 }

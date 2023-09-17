@@ -1,4 +1,5 @@
 ﻿using System.Numerics;
+using System.Runtime.CompilerServices;
 using Vortice.Direct3D11;
 using static MyOtherGame.ConstantBuffers;
 using static MyOtherGame.Meshes;
@@ -52,11 +53,21 @@ internal static class GameObjects
         {
             if (Mesh == null || Material == null) return;
 
-            var constantBuffer = new ConstantBufferChangesEveryPrim(ModelMatrix);
+            //var constantBuffer = new ConstantBufferChangesEveryPrim(ModelMatrix);
+            var constantBuffer = new ConstantBufferChangesEveryPrim
+            {
+                WorldMatrix = ModelMatrix
+            };
 
             // TODO use ref?
             Material.SetupRender(context, constantBuffer);
             context.UpdateSubresource(constantBuffer, primitiveConstantBuffer);
+            //unsafecamera
+            //{
+            //    MappedSubresource mappedResource = context.Map(primitiveConstantBuffer, MapMode.WriteDiscard);
+            //    Unsafe.Copy(mappedResource.DataPointer.ToPointer(), ref constantBuffer);
+            //    context.Unmap(primitiveConstantBuffer, 0);
+            //}
             Mesh.Render(context);
         }
     }
