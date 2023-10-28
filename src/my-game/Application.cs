@@ -53,8 +53,11 @@ namespace MyGame
                 }
 
                 var videoMode = Glfw.GetVideoMode(Glfw.PrimaryMonitor);
-                Width = (int)(videoMode.Width * 0.5f);
-                Height = (int)(videoMode.Height * 0.5f);
+                Width = (int)(videoMode.Width * 0.85f);
+                Height = (int)(videoMode.Height * 0.85f);
+
+                //Width = 640;
+                //Height = 640;
 
                 Glfw.WindowHint(Hint.ScaleToMonitor, false);
                 Glfw.WindowHint(Hint.ClientApi, ClientApi.None);

@@ -13,5 +13,7 @@
 
 float4 main(PixelShaderFlatInput input) : SV_Target
 {
-    return diffuseTexture.Sample(linearSampler, input.textureUV) * input.diffuseColor;
+    return float4(1.0f, 1.0f, 0.0f, 0.0f);
+    
+    //return diffuseTexture.Sample(linearSampler, input.textureUV) * input.diffuseColor;
 }

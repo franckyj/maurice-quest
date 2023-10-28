@@ -35,7 +35,7 @@ namespace MyOtherGame
                 );
 
             // setup the projection matrix
-            SetProjParams(MathF.PI / 4, 1.0f, 1.0f, 1000.0f);
+            SetProjParams(MathF.PI / 4.0f, 1.0f, 1.0f, 1000.0f);
         }
 
         public void SetViewParams(in Vector3 eye, in Vector3 lookAt, in Vector3 up)
@@ -46,8 +46,8 @@ namespace MyOtherGame
 
             // Calculate the view matrix.
             ViewMatrix = Matrix4x4.CreateLookAt(Eye, LookAt, Up);
-            Matrix4x4.Invert(ViewMatrix, out var inverseView);
-            InverseView = inverseView;
+            //Matrix4x4.Invert(ViewMatrix, out var inverseView);
+            //InverseView = inverseView;
 
             // The axis basis vectors and camera position are stored inside the
             // position matrix in the 4 rows of the camera's world matrix.
@@ -59,13 +59,13 @@ namespace MyOtherGame
             //float len = sqrtf(zBasis.z * zBasis.z + zBasis.x * zBasis.x);
             //m_cameraPitchAngle = atan2f(zBasis.y, len);
 
-            var x = inverseView.M31;
-            var y = inverseView.M32;
-            var z = inverseView.M33;
-            CameraYawAngle = MathF.Atan2(x, z);
+            //var x = inverseView.M31;
+            //var y = inverseView.M32;
+            //var z = inverseView.M33;
+            //CameraYawAngle = MathF.Atan2(x, z);
 
-            float len = MathF.Sqrt(z * z + x * x);
-            CameraPitchAngle = MathF.Atan2(y, len);
+            //float len = MathF.Sqrt(z * z + x * x);
+            //CameraPitchAngle = MathF.Atan2(y, len);
         }
 
         public void SetProjParams(in float fieldOfView, in float aspectRatio, in float nearPlane, in float farPlane)

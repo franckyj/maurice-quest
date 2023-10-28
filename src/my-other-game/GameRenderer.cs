@@ -22,6 +22,7 @@ internal class GameRenderer
     private ID3D11Buffer _constantBufferNeverChanges;
     private ID3D11Buffer _constantBufferChangeOnResize;
     private ID3D11Buffer _constantBufferChangesEveryFrame;
+    private ID3D11Buffer _constantBufferTest;
     private ID3D11Buffer _constantBufferChangesEveryPrim;
     private ID3D11SamplerState _samplerLinear;
     private ID3D11VertexShader _vertexShader;
@@ -54,24 +55,18 @@ internal class GameRenderer
         var context = _deviceResources.DeviceContext;
         var renderTargetSize = _deviceResources.RenderTargetSize;
 
-        if (_game != null)
-        {
-            _game.Camera.UpdateAspectRatio(renderTargetSize.Width / (float)renderTargetSize.Height);
+        //if (_game != null)
+        //{
+        //    _game.Camera.UpdateAspectRatio(renderTargetSize.Width / (float)renderTargetSize.Height);
 
-            // update 'change on resize' constant buffer
-            //ConstantBufferChangeOnResize changesOnResizeBuffer = new ConstantBufferChangeOnResize(_game.Camera.ProjectionMatrix);
-            ConstantBufferChangeOnResize changesOnResizeBuffer = new ConstantBufferChangeOnResize
-            {
-                Projection = _game.Camera.ProjectionMatrix
-            };
-            context.UpdateSubresource(changesOnResizeBuffer, _constantBufferChangeOnResize);
-            //unsafe
-            //{
-            //    MappedSubresource mappedResource = context.Map(_constantBufferChangeOnResize, MapMode.WriteDiscard);
-            //    Unsafe.Copy(mappedResource.DataPointer.ToPointer(), ref changesOnResizeBuffer);
-            //    context.Unmap(_constantBufferChangeOnResize, 0);
-            //}
-        }
+        //    // update 'change on resize' constant buffer
+        //    //ConstantBufferChangeOnResize changesOnResizeBuffer = new ConstantBufferChangeOnResize(_game.Camera.ProjectionMatrix);
+        //    ConstantBufferChangeOnResize changesOnResizeBuffer = new ConstantBufferChangeOnResize
+        //    {
+        //        Projection = _game.Camera.ProjectionMatrix
+        //    };
+        //    context.UpdateSubresource(changesOnResizeBuffer, _constantBufferChangeOnResize);
+        //}
     }
 
     public void CreateGameDeviceResources(Simple3DGame game)
@@ -92,7 +87,8 @@ internal class GameRenderer
         size = (Unsafe.SizeOf<ConstantBufferChangeOnResize>() + 15) / 16 * 16;
         //size = Unsafe.SizeOf<ConstantBufferChangeOnResize>();
         _constantBufferChangeOnResize = device.CreateBuffer(
-            size,
+            //size,
+            Unsafe.SizeOf<Matrix4x4>(),
             BindFlags.ConstantBuffer,
             ResourceUsage.Default,
             CpuAccessFlags.None);
@@ -100,7 +96,15 @@ internal class GameRenderer
         size = (Unsafe.SizeOf<ConstantBufferChangesEveryFrame>() + 15) / 16 * 16;
         //size = Unsafe.SizeOf<ConstantBufferChangesEveryFrame>();
         _constantBufferChangesEveryFrame = device.CreateBuffer(
-            size,
+            //size,
+            Unsafe.SizeOf<Matrix4x4>(),
+            BindFlags.ConstantBuffer,
+            ResourceUsage.Default,
+            CpuAccessFlags.None);
+
+        _constantBufferTest = device.CreateBuffer(
+            //size,
+            Unsafe.SizeOf<Matrix4x4>(),
             BindFlags.ConstantBuffer,
             ResourceUsage.Default,
             CpuAccessFlags.None);
@@ -108,7 +112,8 @@ internal class GameRenderer
         size = (Unsafe.SizeOf<ConstantBufferChangesEveryPrim>() + 15) / 16 * 16;
         //size = Unsafe.SizeOf<ConstantBufferChangesEveryPrim>();
         _constantBufferChangesEveryPrim = device.CreateBuffer(
-            size,
+            //size,
+            Unsafe.SizeOf<Matrix4x4>(),
             BindFlags.ConstantBuffer,
             ResourceUsage.Default,
             CpuAccessFlags.None);
@@ -179,36 +184,30 @@ internal class GameRenderer
 
         var device = _deviceResources.Device;
 
-        var constantBufferNeverChanges = new ConstantBufferNeverChanges
-        {
-            LightPosition1 = new Vector4(3.5f, 2.5f, 5.5f, 1.0f),
-            LightPosition2 = new Vector4(3.5f, 2.5f, -5.5f, 1.0f),
-            LightPosition3 = new Vector4(-3.5f, 2.5f, -5.5f, 1.0f),
-            LightPosition4 = new Vector4(3.5f, 2.5f, 5.5f, 1.0f),
-            LightColor = new Vector4(0.25f, 0.25f, 0.25f, 1.0f)
-        };
-        _deviceResources.DeviceContext.UpdateSubresource(constantBufferNeverChanges, _constantBufferNeverChanges);
-        //unsafe
+        //var constantBufferNeverChanges = new ConstantBufferNeverChanges
         //{
-        //    MappedSubresource mappedResource = _deviceResources.DeviceContext.Map(_constantBufferNeverChanges, MapMode.Write);
-        //    Unsafe.Copy(mappedResource.DataPointer.ToPointer(), ref constantBufferNeverChanges);
-        //    _deviceResources.DeviceContext.Unmap(_constantBufferNeverChanges, 0);
-        //}
+        //    LightPosition1 = new Vector4(3.5f, 2.5f, 5.5f, 1.0f),
+        //    LightPosition2 = new Vector4(3.5f, 2.5f, -5.5f, 1.0f),
+        //    LightPosition3 = new Vector4(-3.5f, 2.5f, -5.5f, 1.0f),
+        //    LightPosition4 = new Vector4(3.5f, 2.5f, 5.5f, 1.0f),
+        //    LightColor = new Vector4(0.25f, 0.25f, 0.25f, 1.0f)
+        //};
+        //_deviceResources.DeviceContext.UpdateSubresource(constantBufferNeverChanges, _constantBufferNeverChanges);
 
         // meshes
         MeshObject cylinderMesh = new CylinderMesh(device, 26);
         MeshObject targetMesh = new FaceMesh(device);
         MeshObject sphereMesh = new SphereMesh(device, 26);
 
-        var cylinderMaterial = new Material(
-            new Vector4(0.8f, 0.8f, 0.8f, .5f),
-            new Vector4(0.8f, 0.8f, 0.8f, .5f),
-            new Vector4(1.0f, 1.0f, 1.0f, 1.0f),
-            15.0f,
-            _cylinderTexture,
-            _vertexShader,
-            _pixelShader
-        );
+        //var cylinderMaterial = new Material(
+        //    new Vector4(0.8f, 0.8f, 0.8f, .5f),
+        //    new Vector4(0.8f, 0.8f, 0.8f, .5f),
+        //    new Vector4(1.0f, 1.0f, 1.0f, 1.0f),
+        //    15.0f,
+        //    _cylinderTexture,
+        //    _vertexShader,
+        //    _pixelShader
+        //);
         var sphereMaterial = new Material(
             new Vector4(0.8f, 0.4f, 0.0f, 1.0f),
             //new Vector4(1.0f, 1.0f, 1.0f, 1.0f),
@@ -222,43 +221,45 @@ internal class GameRenderer
 
         foreach (var renderObject in _game.RenderObjects)
         {
-            if (renderObject.TargetId == TargetId.WorldFloor)
+            //if (renderObject.TargetId == TargetId.WorldFloor)
+            //{
+            //    renderObject.Material = new Material(
+            //        new Vector4(0.5f, 0.5f, 0.5f, 1.0f),
+            //        new Vector4(0.8f, 0.8f, 0.8f, 1.0f),
+            //        new Vector4(0.3f, 0.3f, 0.3f, 1.0f),
+            //        150.0f,
+            //        _floorTexture,
+            //        _vertexShaderFlat,
+            //        _pixelShaderFlat);
+            //    renderObject.Mesh = new WorldFloorMesh(device);
+            //}
+            //else if (renderObject is CylinderObject)
+            //{
+            //    renderObject.Mesh = cylinderMesh;
+            //    renderObject.Material = cylinderMaterial;
+            //}
+            //else if (renderObject is SphereObject)
             {
-                renderObject.Material = new Material(
-                    new Vector4(0.5f, 0.5f, 0.5f, 1.0f),
-                    new Vector4(0.8f, 0.8f, 0.8f, 1.0f),
-                    new Vector4(0.3f, 0.3f, 0.3f, 1.0f),
-                    150.0f,
-                    _floorTexture,
-                    _vertexShaderFlat,
-                    _pixelShaderFlat);
-                renderObject.Mesh = new WorldFloorMesh(device);
-            }
-            else if (renderObject is CylinderObject)
-            {
-                renderObject.Mesh = cylinderMesh;
-                renderObject.Material = cylinderMaterial;
-            }
-            else if (renderObject is SphereObject)
-            {
-                renderObject.Mesh = sphereMesh;
-                //renderObject.Mesh = new CubeMesh(device);
+                //renderObject.Mesh = sphereMesh;
+                renderObject.Mesh = new CubeMesh(device);
+                //renderObject.Mesh = new PyramidMesh(device);
                 renderObject.Material = sphereMaterial;
             }
         }
 
         var size = _deviceResources.RenderTargetSize;
         _game.Camera.SetProjParams(
-            MathF.PI / 2.0f,
-            size.Width / (float)size.Height,
-            0.01f,
-            100.0f);
+            MathF.PI / 4.0f,
+            (float)size.Width / (float)size.Height,
+            0.1f,
+            100);
 
         ConstantBufferChangeOnResize changesOnResizeBuffer = new ConstantBufferChangeOnResize
         {
             Projection = _game.Camera.ProjectionMatrix
         };
-        _deviceResources.DeviceContext.UpdateSubresource(changesOnResizeBuffer, _constantBufferChangeOnResize);
+        //_deviceResources.DeviceContext.UpdateSubresource(changesOnResizeBuffer, _constantBufferChangeOnResize);
+        _deviceResources.DeviceContext.UpdateSubresource(_game.Camera.ProjectionMatrix, _constantBufferChangeOnResize);
     }
 
     public void Render()
@@ -280,21 +281,16 @@ internal class GameRenderer
         {
             View = _game.Camera.ViewMatrix
         };
-        d3dContext.UpdateSubresource(constantBufferChangesEveryFrame, _constantBufferChangesEveryFrame);
-        //unsafe
-        //{
-        //    MappedSubresource mappedResource = d3dContext.Map(_constantBufferChangesEveryFrame, MapMode.WriteDiscard);
-        //    Unsafe.Copy(mappedResource.DataPointer.ToPointer(), ref constantBufferChangesEveryFrame);
-        //    d3dContext.Unmap(_constantBufferChangesEveryFrame, 0);
-        //}
+        d3dContext.UpdateSubresource(_game.Camera.ViewMatrix, _constantBufferChangesEveryFrame);
 
         d3dContext.IASetInputLayout(_vertexLayout);
-        d3dContext.VSSetConstantBuffers(0, 4,
+        d3dContext.VSSetConstantBuffers(0, 5,
             new ID3D11Buffer[] {
                 _constantBufferNeverChanges,
                 _constantBufferChangeOnResize,
                 _constantBufferChangesEveryFrame,
-                _constantBufferChangesEveryPrim
+                _constantBufferChangesEveryPrim,
+                _constantBufferTest
             });
 
         d3dContext.PSSetConstantBuffers(2, 2,
@@ -304,8 +300,13 @@ internal class GameRenderer
             });
         d3dContext.PSSetSampler(0, _samplerLinear);
 
+        Matrix4x4 viewProj = Matrix4x4.Multiply(_game.Camera.ViewMatrix, _game.Camera.ProjectionMatrix);
+        //Matrix4x4 viewProj = Matrix4x4.Multiply(_game.Camera.ProjectionMatrix, _game.Camera.ViewMatrix);
         foreach (var renderObject in _game.RenderObjects)
         {
+            Matrix4x4 wvp = Matrix4x4.Multiply(renderObject.ModelMatrix, viewProj);
+            d3dContext.UpdateSubresource(wvp, _constantBufferTest);
+
             renderObject.Render(d3dContext, _constantBufferChangesEveryPrim);
         }
     }

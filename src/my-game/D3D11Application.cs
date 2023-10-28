@@ -23,7 +23,8 @@ internal unsafe sealed class D3D11Application : Application
     private ID3D11DepthStencilView _depthView;
     private ID3D11RasterizerState _rasterizerState;
 
-    private Matrix4x4 _viewProjectionMatrix;
+    private Matrix4x4 _viewMatrix;
+    private Matrix4x4 _projectionMatrix;
     private readonly Color4 _clearColor;
 
     private IDrawable[] _shapes;
@@ -66,7 +67,8 @@ internal unsafe sealed class D3D11Application : Application
         {
             _shapes[i].Update(
                 dt,
-                _viewProjectionMatrix,
+                _viewMatrix,
+                _projectionMatrix,
                 _deviceContext,
                 mouseX,
                 mouseY,
@@ -119,15 +121,18 @@ internal unsafe sealed class D3D11Application : Application
         tempDeviceContext.Dispose();
         tempDevice.Dispose();
 
-        CreateSwapchain(Window!.Hwnd, Width, Height);
+        CreateSwapchain(Window!.Hwnd, Window.ClientSize.Width, Window.ClientSize.Height);
         CreateSwapchainResources();
 
-        _rasterizerState = _device.CreateRasterizerState(new RasterizerDescription(CullMode.Back, FillMode.Solid));
+        _rasterizerState = _device.CreateRasterizerState(new RasterizerDescription(CullMode.Back, FillMode.Wireframe));
         _deviceContext.RSSetState(_rasterizerState);
 
-        Matrix4x4 view = Matrix4x4.CreateLookAt(new Vector3(0, 0, 30), new Vector3(0, 0, 0), Vector3.UnitY);
-        Matrix4x4 projection = Matrix4x4.CreatePerspectiveFieldOfView((float)Math.PI / 4, AspectRatio, 1.0f, 100.0f);
-        _viewProjectionMatrix = Matrix4x4.Multiply(view, projection);
+        _viewMatrix = Matrix4x4.CreateLookAt(new Vector3(0, 0, 45), new Vector3(0, 0, 0), Vector3.UnitY);
+        //_projectionMatrix = Matrix4x4.CreatePerspectiveFieldOfView((float)Math.PI / 4, AspectRatio, 1.0f, 100.0f);
+        //_projectionMatrix = Matrix4x4.CreatePerspectiveFieldOfView(MathF.PI / 4.0f, AspectRatio, 1.0f, 100.0f);
+        //_projectionMatrix = Matrix4x4.CreatePerspectiveFieldOfView(MathF.PI / 2.0f, AspectRatio, 1.0f, 100.0f);
+        _projectionMatrix = Matrix4x4.CreatePerspectiveFieldOfView(MathF.PI / 4.0f, AspectRatio, 1.0f, 100.0f);
+        //_viewProjectionMatrix = Matrix4x4.Multiply(view, projection);
 
         _depthState = _device.CreateDepthStencilState(new DepthStencilDescription()
         {
@@ -137,20 +142,22 @@ internal unsafe sealed class D3D11Application : Application
         });
         _deviceContext.OMSetDepthStencilState(_depthState);
 
-        const int shapeCount = 80;
+        //const int shapeCount = 80;
+        const int shapeCount = 1;
         _shapes = new IDrawable[shapeCount];
 
-        var cubeCount = shapeCount / 2;
+        //var cubeCount = shapeCount / 2;
+        var cubeCount = shapeCount;
         for (int i = 0; i < cubeCount; ++i)
         {
-            _shapes[i] = new Drawable.Box(new Vector3(0, 0, 0), _device, i);
+            _shapes[i] = new Drawable.Box(new Vector3(30, 0, 0), _device, i);
         }
 
-        var pyramidCount = shapeCount - cubeCount;
-        for (int i = cubeCount; i < cubeCount + pyramidCount; ++i)
-        {
-            _shapes[i] = new Drawable.Pyramid(new Vector3(0, 0, 0), _device, i);
-        }
+        //var pyramidCount = shapeCount - cubeCount;
+        //for (int i = cubeCount; i < cubeCount + pyramidCount; ++i)
+        //{
+        //    _shapes[i] = new Drawable.Pyramid(new Vector3(0, 0, 0), _device, i);
+        //}
     }
 
     protected override void OnResize()
@@ -229,6 +236,7 @@ internal unsafe sealed class D3D11Application : Application
 
         throw new InvalidOperationException("Unable to find a D3D11 adapter");
     }
+
     private void CreateSwapchain(IntPtr windowHandle, int width, int height)
     {
         var swapChainDescriptor = new SwapChainDescription1
@@ -243,7 +251,7 @@ internal unsafe sealed class D3D11Application : Application
                 Count = 1,
                 Quality = 0
             },
-            Scaling = Scaling.Stretch,
+            Scaling = Scaling.None,
             SwapEffect = SwapEffect.FlipDiscard,
             AlphaMode = AlphaMode.Ignore,
             Flags = SwapChainFlags.None

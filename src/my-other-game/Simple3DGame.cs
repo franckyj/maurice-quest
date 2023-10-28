@@ -16,11 +16,10 @@ internal class Simple3DGame
 
     public void Initialize()
     {
-        _renderObjects = new GameObject[1];
         _camera = new Camera();
-        _camera.SetProjParams(MathF.PI / 2.0f, 1.0f, 0.01f, 1000.0f);
+        //_camera.SetProjParams(MathF.PI / 4.0f, 1.0f, 1.0f, 100.0f);
         _camera.SetViewParams(
-            new Vector3(0.0f, 0f, 4.0f),
+            new Vector3(0.0f, 0f, 45.0f),
             //m_player->Position(),             // Eye point in world coordinates.
             new Vector3(0.0f, 0.0f, 0.0f),      // Look at point in world coordinates.
             Vector3.UnitY                       // The Up vector for the camera.
@@ -33,6 +32,21 @@ internal class Simple3DGame
         //    new Vector3(0.0f, -1.0f, 0.0f)      // The Up vector for the camera.
         //);
 
-        _renderObjects[0] = new SphereObject();
+        _renderObjects = new GameObject[1];
+        _renderObjects[0] = new SphereObject(
+            new Vector3(30.0f, 0.0f, 0.0f),
+            1.0f);
+        //_renderObjects[1] = new CylinderObject(
+        //    new Vector3(-4.0f, 0.0f, 0.0f),
+        //    1.0f,
+        //    Vector3.UnitY);
+    }
+
+    public void Update(float dt)
+    {
+        //var p = _renderObjects[0].Position;
+        //p.X += dt * 5;
+        //_renderObjects[0].Position = p;
+        //((SphereObject)_renderObjects[0]).Update();
     }
 }

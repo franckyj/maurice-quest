@@ -1,8 +1,8 @@
 ﻿using System.Numerics;
 using Vortice.Direct3D11;
-using static MyOtherGame.ConstantBuffers;
+using static MyOtherOtherGame.Graphics.ConstantBuffers;
 
-namespace MyOtherGame;
+namespace MyOtherOtherGame.Graphics;
 
 internal class Material
 {
@@ -36,14 +36,14 @@ internal class Material
         in ID3D11DeviceContext context,
         ConstantBufferChangesEveryPrim constantBuffer)
     {
-        //constantBuffer.MeshColor = MeshColor;
-        //constantBuffer.SpecularColor = SpecularColor;
-        //constantBuffer.SpecularPower = SpecularExponent;
-        //constantBuffer.DiffuseColor = DiffuseColor;
+        constantBuffer.MeshColor = MeshColor;
+        constantBuffer.SpecularColor = SpecularColor;
+        constantBuffer.SpecularPower = SpecularExponent;
+        constantBuffer.DiffuseColor = DiffuseColor;
 
-        //context.PSSetShaderResource(0, TextureResourceView);
-        //context.VSSetShader(VertexShader, null, 0);
-        //context.PSSetShader(PixelShader, null, 0);
+        context.PSSetShaderResource(0, TextureResourceView);
+        context.VSSetShader(VertexShader, null, 0);
+        context.PSSetShader(PixelShader, null, 0);
         context.VSSetShader(VertexShader);
         context.PSSetShader(PixelShader);
     }

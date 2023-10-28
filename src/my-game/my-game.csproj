@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
     <RootNamespace>MyGame</RootNamespace>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
@@ -16,6 +16,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Remove="Drawable\Pyramid.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="glfw-net" Version="3.3.1" />
     <PackageReference Include="Vortice.D3DCompiler" Version="3.2.1-beta" />
     <PackageReference Include="Vortice.Direct2D1" Version="3.2.1-beta" />
@@ -26,6 +30,9 @@
   <ItemGroup>
     <None Update="assets\imgs\owl.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="assets\shaders\Cube.hlsl">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="assets\shaders\main.both.hlsl">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>

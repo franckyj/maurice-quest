@@ -1,4 +1,4 @@
-﻿using System.Numerics;
+﻿using GLFW;
 
 namespace MyOtherGame;
 
@@ -6,6 +6,7 @@ public enum GameState
 {
     Starting,
     Running,
+    Paused,
     Stopping,
     Stopped
 }
@@ -30,23 +31,50 @@ internal class GameMain
         _gameState = GameState.Starting;
     }
 
-    public void Run()
+    public void Run(NativeWindow? window)
     {
+        if (window == null) return;
+
+        _gameState = GameState.Running;
         while (_gameState != GameState.Stopped)
         {
             // necessary as to not freeze the window
             GLFW.Glfw.PollEvents();
 
-            //var escape = Glfw.GetKey(Window, Keys.Escape);
-            //if (escape == InputState.Press)
-            //    running = false;
+            var space = Glfw.GetKey(window, Keys.Space);
+            //Console.WriteLine(space.ToString());
+            if (space == InputState.Press)
+                Pause();
+            //TogglePause();
 
             //Glfw.GetCursorPosition(Window, out double mouseX, out double mouseY);
+
+            if (_gameState == GameState.Paused) continue;
 
             Update();
             _renderer.Render();
             _deviceResources.Present();
         }
+    }
+
+    public void TogglePause()
+    {
+        Console.WriteLine("toggle pause");
+
+        if (_gameState != GameState.Paused) Pause();
+        else Unpause();
+    }
+
+    public void Pause()
+    {
+        _gameState = GameState.Paused;
+        Console.WriteLine("paused");
+    }
+
+    public void Unpause()
+    {
+        _gameState = GameState.Running;
+        Console.WriteLine("unpaused");
     }
 
     public void Stop()
@@ -56,6 +84,7 @@ internal class GameMain
 
     private void Update()
     {
-
+        var dt = 1.0f / 60.0f;
+        _game.Update(dt);
     }
 }

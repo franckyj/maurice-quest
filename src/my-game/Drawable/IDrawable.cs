@@ -7,7 +7,8 @@ internal interface IDrawable
 {
     void Update(
         float deltaTime,
-        Matrix4x4 viewProjectionMatrix,
+        Matrix4x4 viewMatrix,
+        Matrix4x4 projectionMatrix,
         ID3D11DeviceContext context,
         float mouseX,
         float mouseY,

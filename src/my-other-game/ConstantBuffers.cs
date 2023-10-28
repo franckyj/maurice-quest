@@ -95,10 +95,10 @@ internal class ConstantBuffers
     public struct ConstantBufferChangesEveryPrim
     {
         public Matrix4x4 WorldMatrix;
-        public Vector4 MeshColor;
-        public Vector4 DiffuseColor;
-        public Vector4 SpecularColor;
-        public float SpecularPower;
+        //public Vector4 MeshColor;
+        //public Vector4 DiffuseColor;
+        //public Vector4 SpecularColor;
+        //public float SpecularPower;
 
         //public ConstantBufferChangesEveryPrim(
         //    Matrix4x4 worldMatrix,

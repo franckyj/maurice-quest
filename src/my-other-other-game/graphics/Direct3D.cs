@@ -4,32 +4,30 @@ using Vortice.Direct3D11;
 using Vortice.DXGI;
 using Vortice.Mathematics;
 
-namespace MyOtherGame;
+namespace MyOtherOtherGame.Graphics;
 
-internal class DeviceResources
+internal class Direct3D : IDisposable
 {
     private static readonly FeatureLevel[] _featureLevels;
 
-    private IntPtr _windowHandle;
-    private Viewport _viewport;
-    private ID3D11Device _device;
-    private ID3D11DeviceContext _deviceContext;
-    private IDXGIFactory7 _dxgiFactory;
+    private readonly ID3D11Device _device;
+    private readonly ID3D11DeviceContext _deviceContext;
+    private readonly IDXGIFactory7 _dxgiFactory;
     private IDXGISwapChain1 _swapchain;
     private ID3D11Texture2D _backBuffer;
     private ID3D11RenderTargetView _renderTargetView;
-    private Size _renderTargetSize;
+    private ID3D11RenderTargetView[] _renderTargetViews;
     private ID3D11DepthStencilView _depthStencilView;
+    private Size _renderTargetSize;
+    private IntPtr _windowHandle;
+    private Viewport _viewport;
 
-    // TODO change all of those properties
-    public ID3D11DeviceContext DeviceContext => _deviceContext;
+    private bool _isDisposed;
+
     public ID3D11Device Device => _device;
-    public ID3D11RenderTargetView RenderTargetView => _renderTargetView;
-    public Size RenderTargetSize => _renderTargetSize;
-    public ID3D11DepthStencilView DepthStencilView => _depthStencilView;
-    public Viewport Viewport => _viewport;
+    public ID3D11DeviceContext DeviceContext => _deviceContext;
 
-    static DeviceResources()
+    static Direct3D()
     {
         _featureLevels = new[]
         {
@@ -40,17 +38,7 @@ internal class DeviceResources
         };
     }
 
-    public DeviceResources()
-    {
-        // D2D11 stuff
-        // CreateDeviceIndependentResources();
-        CreateDeviceResources();
-    }
-
-    /// <summary>
-    /// Configures the Direct3D device, and stores handles to it and the device context.
-    /// </summary>
-    public void CreateDeviceResources()
+    public Direct3D()
     {
         _dxgiFactory = DXGI.CreateDXGIFactory2<IDXGIFactory7>(false);
 
@@ -90,12 +78,53 @@ internal class DeviceResources
         CreateWindowSizeDependentResources();
     }
 
+    public void BeginFrame()
+    {
+        Color4 clearColor = new Color4(255, 0, 255);
+        _deviceContext.ClearRenderTargetView(_renderTargetView, clearColor);
+        _deviceContext.ClearDepthStencilView(_depthStencilView, DepthStencilClearFlags.Depth, 1.0f, 0);
+
+        // this needs to stay there!
+        _deviceContext.OMSetRenderTargets(1, _renderTargetViews, _depthStencilView);
+    }
+
     public void Present()
     {
         // the first argument instructs DXGI to block until VSync, putting the application
         // to sleep until the next VSync. This ensures we don't waste any cycles rendering
         // frames that will never be displayed to the screen
         _swapchain.Present(1, PresentFlags.None);
+    }
+
+    public void OnResize(Size newClientSize)
+    {
+        _renderTargetSize = newClientSize;
+        CreateWindowSizeDependentResources();
+    }
+
+    protected virtual void Dispose(bool disposing)
+    {
+        if (!_isDisposed)
+        {
+            if (disposing)
+            {
+                _depthStencilView.Dispose();
+                _renderTargetView.Dispose();
+                _backBuffer.Dispose();
+                _swapchain.Dispose();
+                _dxgiFactory.Dispose();
+                _deviceContext.Dispose();
+                _device.Dispose();
+            }
+
+            _isDisposed = true;
+        }
+    }
+
+    public void Dispose()
+    {
+        Dispose(disposing: true);
+        GC.SuppressFinalize(this);
     }
 
     private void CreateWindowSizeDependentResources()
@@ -148,6 +177,7 @@ internal class DeviceResources
         _backBuffer = _swapchain.GetBuffer<ID3D11Texture2D>(0);
         RenderTargetViewDescription renderTargetViewDesc = new(RenderTargetViewDimension.Texture2D, Format.R8G8B8A8_UNorm);
         _renderTargetView = _device.CreateRenderTargetView(_backBuffer, renderTargetViewDesc);
+        _renderTargetViews = new[] { _renderTargetView };
 
         var depthTexture = _device.CreateTexture2D(Format.D32_Float, _renderTargetSize.Width, _renderTargetSize.Height, 1, 1, null, BindFlags.DepthStencil, ResourceOptionFlags.None, ResourceUsage.Default, CpuAccessFlags.None);
         _depthStencilView = _device.CreateDepthStencilView(depthTexture, new DepthStencilViewDescription()
@@ -156,6 +186,7 @@ internal class DeviceResources
             ViewDimension = DepthStencilViewDimension.Texture2D
         });
         _viewport = new Viewport(_renderTargetSize.Width, _renderTargetSize.Height);
+        _deviceContext.RSSetViewport(_viewport);
     }
 
     private void DestroySwapchainResources()
@@ -202,11 +233,7 @@ internal class DeviceResources
         }
 
         for (var adapterIndex = 0;
-#if NET6
-                 _dxgiFactory.EnumAdapters1(adapterIndex, out IDXGIAdapter1? adapter).Success;
-#else
              _dxgiFactory.EnumAdapters1(adapterIndex, out var adapter).Success;
-#endif
              adapterIndex++)
         {
             var adapterDescription = adapter.Description1;

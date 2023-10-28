@@ -1,9 +1,9 @@
 ﻿using System.Numerics;
 using Vortice.Direct3D11;
-using static MyOtherGame.ConstantBuffers;
-using static MyOtherGame.Meshes;
+using static MyOtherOtherGame.Graphics.ConstantBuffers;
+using static MyOtherOtherGame.Graphics.Meshes;
 
-namespace MyOtherGame;
+namespace MyOtherOtherGame.Graphics;
 
 internal static class GameObjects
 {
@@ -15,7 +15,7 @@ internal static class GameObjects
         WorldWalls = 80003
     }
 
-    public class GameObject
+    public abstract class GameObject
     {
         public GameObject(
             Vector3 position,
@@ -36,27 +36,24 @@ internal static class GameObjects
         public MeshObject? Mesh { get; set; }
         public Material? Material { get; set; }
 
-
         public Vector3 Position { get; set; }
         public Vector3 Velocity { get; set; }
         public Matrix4x4 ModelMatrix { get; set; }
 
         public TargetId TargetId { get; protected set; }
 
-        public void UpdatePosition()
-        {
-
-        }
+        public abstract void UpdateModelMatrix();
 
         public virtual void Render(in ID3D11DeviceContext context, in ID3D11Buffer primitiveConstantBuffer)
         {
             if (Mesh == null || Material == null) return;
 
-            //var constantBuffer = new ConstantBufferChangesEveryPrim(ModelMatrix);
-            var constantBuffer = new ConstantBufferChangesEveryPrim
-            {
-                WorldMatrix = ModelMatrix
-            };
+            var constantBuffer = new ConstantBufferChangesEveryPrim(
+                ModelMatrix,
+                Vector4.Zero,
+                Vector4.Zero,
+                Vector4.Zero,
+                1.0f);
 
             // TODO use ref?
             Material.SetupRender(context, constantBuffer);
@@ -83,16 +80,6 @@ internal static class GameObjects
         private float _phi;
         private float _chi;
 
-        public float Radius
-        {
-            get => _radius;
-            set
-            {
-                _radius = value;
-                Update();
-            }
-        }
-
         public SphereObject(TargetId targetId = TargetId.Unknown)
             : this(Vector3.Zero, 1.0f, targetId)
         { }
@@ -100,11 +87,11 @@ internal static class GameObjects
         public SphereObject(Vector3 position, float radius, TargetId targetId = TargetId.Unknown)
         {
             Position = position;
-            Radius = radius;
+            _radius = radius;
             TargetId = targetId;
 
-            var random = new Random(1);
-            _radius = 6.0f + random.NextSingle() * (20.0f - 6.0f);
+            var random = new Random((int)radius);
+            //_radius = 6.0f + random.NextSingle() * (20.0f - 6.0f);
             _droll = random.NextSingle() * (float)Math.PI * 2.0f;
             _dpitch = random.NextSingle() * (float)Math.PI * 2.0f;
             _dyaw = random.NextSingle() * (float)Math.PI * 2.0f;
@@ -116,15 +103,16 @@ internal static class GameObjects
             _chi = random.NextSingle() * (float)Math.PI * 2.0f;
         }
 
-        public void Update()
+        public override void UpdateModelMatrix()
         {
             ModelMatrix =
-                //Matrix4x4.CreateScale(_radius, _radius, _radius) *
+                Matrix4x4.CreateScale(_radius, _radius, _radius) *
                 Matrix4x4.CreateTranslation(Position);
-            //ModelMatrix = Matrix4x4.CreateTranslation(Position);
         }
 
-        public override void Render(in ID3D11DeviceContext context, in ID3D11Buffer primitiveConstantBuffer)
+        public override void Render(
+            in ID3D11DeviceContext context,
+            in ID3D11Buffer primitiveConstantBuffer)
         {
             const float deltaTime = 1.0f / 60.0f;
 
@@ -135,11 +123,11 @@ internal static class GameObjects
             _phi += deltaTime * _dphi;
             _chi += deltaTime * _dchi;
 
-            //ModelMatrix =
-                //Matrix4x4.CreateFromYawPitchRoll(_yaw, _pitch, _roll) *
-                //Matrix4x4.CreateTranslation(_radius, 0.0f, 0.0f) *
-                //Matrix4x4.CreateFromYawPitchRoll(_theta, _phi, _chi) *
-                //Matrix4x4.CreateTranslation(Position);
+            ModelMatrix =
+                Matrix4x4.CreateFromYawPitchRoll(_yaw, _pitch, _roll) *
+                Matrix4x4.CreateTranslation(_radius, 0.0f, 0.0f) *
+                Matrix4x4.CreateFromYawPitchRoll(_theta, _phi, _chi) *
+                Matrix4x4.CreateTranslation(Position);
 
             base.Render(context, primitiveConstantBuffer);
         }
@@ -186,17 +174,42 @@ internal static class GameObjects
                 mat = Matrix4x4.CreateFromAxisAngle(axis, angle);
             }
             _rotationMatrix = mat;
-            // S * R * T
-            ModelMatrix =
-                Matrix4x4.CreateTranslation(Position);
-            //*
-            //mat *
-            //Matrix4x4.CreateScale(_radius, _radius, _length);
 
-            //ModelMatrix = Matrix4x4
-            //    .CreateScale(_radius, _radius, _length) *
-            //    mat *
-            //    Matrix4x4.CreateTranslation(Position);
+            UpdateModelMatrix();
+        }
+
+        public override void UpdateModelMatrix()
+        {
+            // S * R * T
+            ModelMatrix = Matrix4x4
+                .CreateScale(_radius, _radius, _length) *
+                _rotationMatrix *
+                Matrix4x4.CreateTranslation(Position);
+        }
+    }
+
+    public class CubeObject : GameObject
+    {
+        private readonly float _length;
+        private Matrix4x4 _rotationMatrix;
+
+        public float Length { get => _length; }
+        public Matrix4x4 RotationMatrix { get => _rotationMatrix; }
+
+        public CubeObject(Vector3 position, float length)
+        {
+            Position = position;
+            _length = length;
+
+            UpdateModelMatrix();
+        }
+
+        public override void UpdateModelMatrix()
+        {
+            // S * R * T
+            ModelMatrix = Matrix4x4
+                .CreateScale(_length, _length, _length) *
+                Matrix4x4.CreateTranslation(Position);
         }
     }
 }

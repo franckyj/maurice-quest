@@ -61,10 +61,3 @@ struct PixelShaderInput
     float3 vertexToLight3 : TEXCOORD6;
     float4 test : POSITION;
 };
-
-struct PixelShaderFlatInput
-{
-    float4 position : SV_POSITION;
-    float2 textureUV : TEXCOORD0;
-    float4 diffuseColor : TEXCOORD1;
-};

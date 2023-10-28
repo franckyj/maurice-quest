@@ -27,22 +27,9 @@ namespace MyOtherGame
             Initialize();
             Load();
 
-            _game.Run();
+            _game.Run(Window);
 
-            //bool running = true;
-            //while (!Window!.IsClosing && running)
-            //{
-            //    Glfw.PollEvents();
-
-            //    var escape = Glfw.GetKey(Window, Keys.Escape);
-            //    if (escape == InputState.Press)
-            //        running = false;
-
-            //    Glfw.GetCursorPosition(Window, out double mouseX, out double mouseY);
-
-            //    Update((float)mouseX, (float)mouseY);
-            //    Render();
-            //}
+            Dispose(true);
         }
 
         protected virtual void Initialize()
@@ -56,8 +43,11 @@ namespace MyOtherGame
                 }
 
                 var videoMode = Glfw.GetVideoMode(Glfw.PrimaryMonitor);
-                Width = (int)(videoMode.Width * 0.5f);
-                Height = (int)(videoMode.Height * 0.5f);
+                //Width = (int)(videoMode.Width * 0.8f);
+                //Height = (int)(videoMode.Height * 0.8f);
+
+                Width = 1280;
+                Height = 720;
 
                 Glfw.WindowHint(Hint.ScaleToMonitor, false);
                 Glfw.WindowHint(Hint.ClientApi, ClientApi.None);
@@ -72,7 +62,7 @@ namespace MyOtherGame
 
                 // initialize the game main + device resources
                 _deviceResources = new DeviceResources();
-                _deviceResources.SetWindow(Window.Hwnd, Height, Width);
+                _deviceResources.SetWindow(Window.Hwnd, Window.ClientSize.Width, Window.ClientSize.Height);
                 _game = new GameMain(_deviceResources, new GameRenderer(_deviceResources));
             }
             catch (System.Exception ex)
@@ -92,9 +82,7 @@ namespace MyOtherGame
         { }
 
         protected virtual void OnResize()
-        {
-            //Console.WriteLine("Window has been resized!");
-        }
+        { }
 
         //protected virtual void Render()
         //{ }
@@ -112,7 +100,6 @@ namespace MyOtherGame
         private void CloseCallback(IntPtr window)
         {
             _game.Stop();
-            Dispose(true);
         }
 
         protected virtual void Dispose(bool disposing)
