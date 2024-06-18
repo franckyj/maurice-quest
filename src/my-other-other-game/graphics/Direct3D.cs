@@ -67,7 +67,7 @@ internal class Direct3D : IDisposable
         tempDeviceContext.Dispose();
         tempDevice.Dispose();
 
-        var rasterizerState = _device.CreateRasterizerState(new RasterizerDescription(CullMode.Back, FillMode.Wireframe));
+        var rasterizerState = _device.CreateRasterizerState(new RasterizerDescription(CullMode.Back, FillMode.Solid));
         _deviceContext.RSSetState(rasterizerState);
     }
 

@@ -1,4 +1,5 @@
 ﻿using System.Numerics;
+using System.Runtime.CompilerServices;
 using Vortice.Direct3D11;
 using Vortice.DXGI;
 
@@ -8,6 +9,7 @@ internal static class Vertices
 {
     public readonly record struct PNTVertex(Vector3 Position, Vector3 Normal, Vector2 TextureCoordinate);
 
+    public static int PNTVertexStride = Unsafe.SizeOf<PNTVertex>();
 
     public static InputElementDescription[] PNTVertexLayout = new InputElementDescription[]
     {

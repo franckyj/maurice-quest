@@ -31,15 +31,10 @@ cbuffer ConstantBufferChangesEveryFrame : register(b2)
 cbuffer ConstantBufferChangesEveryPrim : register (b3)
 {
     matrix world;
-    //float4 meshColor;
-    //float4 diffuseColor;
-    //float4 specularColor;
-    //float  specularExponent;
-};
-
-cbuffer TestBuffer : register(b4)
-{
-    matrix wvpMat;
+    float4 meshColor;
+    float4 diffuseColor;
+    float4 specularColor;
+    float specularExponent;
 };
 
 struct VertextShaderInput
@@ -59,5 +54,4 @@ struct PixelShaderInput
     float3 vertexToLight1 : TEXCOORD4;
     float3 vertexToLight2 : TEXCOORD5;
     float3 vertexToLight3 : TEXCOORD6;
-    float4 test : POSITION;
 };

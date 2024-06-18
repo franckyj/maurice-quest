@@ -13,25 +13,25 @@
 
 float4 main(PixelShaderInput input) : SV_Target
 {
-    return float4(1.0f, 1.0f, 0.0f, 0.0f);
+    //return float4(1.0f, 1.0f, 0.0f, 0.0f);
+
+    float diffuseLuminance =
+        max(0.0f, dot(input.normal, input.vertexToLight0)) +
+        max(0.0f, dot(input.normal, input.vertexToLight1)) +
+        max(0.0f, dot(input.normal, input.vertexToLight2)) +
+        max(0.0f, dot(input.normal, input.vertexToLight3));
+
+    // Normalize view space vertex-to-eye
+    input.vertexToEye = normalize(input.vertexToEye);
+
+    float specularLuminance =
+        pow(max(0.0f, dot(input.normal, normalize(input.vertexToEye + input.vertexToLight0))), specularExponent) +
+        pow(max(0.0f, dot(input.normal, normalize(input.vertexToEye + input.vertexToLight1))), specularExponent) +
+        pow(max(0.0f, dot(input.normal, normalize(input.vertexToEye + input.vertexToLight2))), specularExponent) +
+        pow(max(0.0f, dot(input.normal, normalize(input.vertexToEye + input.vertexToLight3))), specularExponent);
     
-    //float diffuseLuminance =
-    //    max(0.0f, dot(input.normal, input.vertexToLight0)) +
-    //    max(0.0f, dot(input.normal, input.vertexToLight1)) +
-    //    max(0.0f, dot(input.normal, input.vertexToLight2)) +
-    //    max(0.0f, dot(input.normal, input.vertexToLight3));
+    float4 specular;
+    specular = specularColor * specularLuminance * 0.5f;
 
-    //// Normalize view space vertex-to-eye
-    //input.vertexToEye = normalize(input.vertexToEye);
-
-    //float specularLuminance =
-    //    pow(max(0.0f, dot(input.normal, normalize(input.vertexToEye + input.vertexToLight0))), specularExponent) +
-    //    pow(max(0.0f, dot(input.normal, normalize(input.vertexToEye + input.vertexToLight1))), specularExponent) +
-    //    pow(max(0.0f, dot(input.normal, normalize(input.vertexToEye + input.vertexToLight2))), specularExponent) +
-    //    pow(max(0.0f, dot(input.normal, normalize(input.vertexToEye + input.vertexToLight3))), specularExponent);
-
-    //float4 specular;
-    //specular = specularColor * specularLuminance * 0.5f;
-
-    //return diffuseTexture.Sample(linearSampler, input.textureUV) * diffuseColor * diffuseLuminance * 0.5f + specular;
+    return diffuseTexture.Sample(linearSampler, input.textureUV) * diffuseColor * diffuseLuminance * 0.5f + specular;
 }

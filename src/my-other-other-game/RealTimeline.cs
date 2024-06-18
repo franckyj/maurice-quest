@@ -1,10 +1,20 @@
 ﻿namespace MyOtherOtherGame;
 
-internal sealed class Timer
+public interface ITimeline
+{
+    TimeSpan GetTotalTime();
+    TimeSpan GetDeltaTime();
+    void Reset();
+    void Start();
+    void Tick();
+    void Stop();
+}
+
+internal sealed class RealTimeline : ITimeline
 {
     private long _startTime;
     private long _totalIdleTime;
-    private long _pausedTime;
+    private long _stopTime;
     private long _currentTime;
     private long _previousTime;
     private long _deltaTime;
@@ -17,7 +27,7 @@ internal sealed class Timer
     /// <returns>Total time since the game started</returns>
     public TimeSpan GetTotalTime()
     {
-        if (_isStopped) return new TimeSpan(_pausedTime - _startTime - _totalIdleTime);
+        if (_isStopped) return new TimeSpan(_stopTime - _startTime - _totalIdleTime);
 
         return new TimeSpan(_currentTime - _startTime - _totalIdleTime);
     }
@@ -41,7 +51,7 @@ internal sealed class Timer
 
         _startTime = now;
         _previousTime = now;
-        _pausedTime = 0;
+        _stopTime = 0;
         _isStopped = false;
     }
 
@@ -53,10 +63,10 @@ internal sealed class Timer
         if (!_isStopped) return;
 
         var now = DateTime.Now.Ticks;
-        _totalIdleTime = now - _pausedTime;
+        _totalIdleTime = now - _stopTime;
 
         _previousTime = now;
-        _pausedTime = 0;
+        _stopTime = 0;
         _isStopped = false;
     }
 
@@ -90,7 +100,7 @@ internal sealed class Timer
 
         var now = DateTime.Now.Ticks;
 
-        _pausedTime = now;
+        _stopTime = now;
         _isStopped = true;
     }
 }

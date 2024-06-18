@@ -1,8 +1,7 @@
-﻿using GLFW;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using MyOtherOtherGame.Graphics;
-using MyOtherOtherGame.inputs;
+using MyOtherOtherGame.Inputs;
 
 namespace MyOtherOtherGame;
 
@@ -13,7 +12,7 @@ internal abstract class D3D11Application : IDisposable
     public static TimeSpan DeltaTime = TimeSpan.FromMilliseconds(1000.0 / 240.0);
 
     private readonly ILogger<D3D11Application> _logger;
-    private readonly Timer _timer;
+    private readonly ITimeline _timer;
     private readonly FpsCalculator _fpsCalculator;
 
     private bool _showFps;
@@ -21,7 +20,7 @@ internal abstract class D3D11Application : IDisposable
     private bool _disposed;
 
     protected readonly Window _window;
-    protected readonly Keyboard _keyboard;
+    protected readonly Input _input;
     protected readonly Direct3D _d3d;
 
     public D3D11Application(
@@ -31,16 +30,16 @@ internal abstract class D3D11Application : IDisposable
         _logger = logger ?? new NullLogger<D3D11Application>();
         _logger.LogDebug("About to initialize...");
 
-        _timer = new Timer();
+        _timer = new RealTimeline();
         _window = new Window(this, title);
-        _keyboard = new Keyboard(_window);
+        _input = new Input(_window);
         _fpsCalculator = new FpsCalculator(_timer);
 
         // create d3d stuff
         _d3d = new Direct3D();
         _d3d.SetWindow(_window.WindowHandle, _window.ClientWindowWidth, _window.ClientWindowHeight);
 
-        _keyboard.SetOnShowFpsPressed(() => { _showFps = !_showFps; });
+        _input.SetOnShowFpsPressed(() => { _showFps = !_showFps; });
 
         _logger.LogDebug("Initialization completed!");
     }
@@ -54,7 +53,6 @@ internal abstract class D3D11Application : IDisposable
 
         // enter main event loop
         bool continueRunning = true;
-
         while (continueRunning)
         {
             _timer.Tick();
@@ -64,7 +62,7 @@ internal abstract class D3D11Application : IDisposable
                 CalculateFrameStatistics();
 
                 // acquire input
-                Glfw.PollEvents();
+                _input.UpdateInput();
 
                 // accumulate the elapsed time since the last frame
                 accumulatedTime += _timer.GetDeltaTime();

@@ -9,9 +9,9 @@ internal class FpsCalculator
 
     private Fps _currentFps;
 
-    private Timer _timer;
+    private readonly ITimeline _timer;
 
-    public FpsCalculator(Timer timer)
+    public FpsCalculator(ITimeline timer)
     {
         _timer = timer ?? throw new ArgumentNullException(nameof(timer));
         _currentFps = new Fps(0, TimeSpan.Zero);

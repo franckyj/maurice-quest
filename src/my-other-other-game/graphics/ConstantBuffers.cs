@@ -2,7 +2,7 @@
 
 namespace MyOtherOtherGame.Graphics;
 
-internal class ConstantBuffers
+internal static class ConstantBuffers
 {
     public struct ConstantBufferNeverChanges
     {
