@@ -56,7 +56,7 @@ internal static class GameObjects
                 1.0f);
 
             // TODO use ref?
-            Material.SetupRender(context, constantBuffer);
+            Material.SetupRender(context, ref constantBuffer);
             context.UpdateSubresource(constantBuffer, primitiveConstantBuffer);
             Mesh.Render(context);
         }

@@ -1,8 +1,8 @@
 ﻿using System.Numerics;
 using Vortice.Direct3D11;
-using static MyOtherOtherGame.Graphics.ConstantBuffers;
+using static MyTetris.ConstantBuffers;
 
-namespace MyOtherOtherGame.Graphics;
+namespace MyTetris;
 
 internal class Material
 {

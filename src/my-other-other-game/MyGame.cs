@@ -5,11 +5,11 @@ using System.Runtime.CompilerServices;
 using Microsoft.Extensions.Logging;
 using MyOtherOtherGame.Assets;
 using MyOtherOtherGame.Graphics;
-using MyOtherOtherGame.Voxels;
 using Vortice.Direct3D11;
 using Vortice.DXGI;
 using Vortice.WIC;
 using static MyOtherOtherGame.Graphics.ConstantBuffers;
+using static MyOtherOtherGame.Graphics.GameObjects;
 using static MyOtherOtherGame.Graphics.Vertices;
 
 namespace MyOtherOtherGame;
@@ -31,7 +31,11 @@ internal class MyGame : D3D11Application
     private ID3D11PixelShader _pixelShader;
     private ID3D11InputLayout _vertexLayout;
 
-    private readonly WorldRenderer _renderer;
+    private Material _defaultMaterial;
+
+    //private readonly WorldRenderer _renderer;
+
+    private GameObject[] _renderObjects;
 
     public MyGame(
         ILogger<D3D11Application> logger,
@@ -39,16 +43,36 @@ internal class MyGame : D3D11Application
         : base(logger, title)
     {
         _camera = new Camera();
-        _camera.SetProjParams(
-            MathF.PI / 4.0f,
+
+        // https://gamedev.net/forums/topic/662958-orthographic-projection-widthheight/
+        _camera.SetOrthographic(
+            80.0f,
             (float)_window.ClientWindowWidth / (float)_window.ClientWindowHeight,
-            0.1f,
-            1000);
-        _camera.SetViewParams(new Vector3(50, 50, 50), Vector3.Zero, Vector3.UnitY);
+            1.0f,
+            1000.0f);
+
+        //_camera.SetPerspective(
+        //    MathF.PI / 4.0f,
+        //    (float)_window.ClientWindowWidth / (float)_window.ClientWindowHeight,
+        //    0.1f,
+        //    1000);
+        //_camera.SetViewParams(new Vector3(50, 50, 50), Vector3.Zero, Vector3.UnitY);
+
+        _camera.SetIsometric(new Vector3(30, 30, 30));
+        //_camera.SetIsometric(new Vector3(100, 100, 100));
 
         CreateGameDeviceResources();
 
-        _renderer = new WorldRenderer(_d3d);
+        //_renderer = new WorldRenderer(_d3d);
+
+        _renderObjects = new GameObject[1]
+        {
+            new CubeObject(Vector3.Zero, 5)
+            {
+                Material = _defaultMaterial,
+                Mesh = new Meshes.CubeMesh(_d3d.Device)
+            }
+        };
 
         BindInput();
     }
@@ -117,16 +141,25 @@ internal class MyGame : D3D11Application
 
         var constantBufferNeverChanges = new ConstantBufferNeverChanges
         {
-            LightPosition1 = new Vector4(3.5f, 2.5f, 5.5f, 1.0f),
-            LightPosition2 = new Vector4(3.5f, 2.5f, -5.5f, 1.0f),
-            LightPosition3 = new Vector4(-3.5f, 2.5f, -5.5f, 1.0f),
-            LightPosition4 = new Vector4(3.5f, 2.5f, 5.5f, 1.0f),
-            LightColor = new Vector4(0.25f, 0.25f, 0.25f, 1.0f)
+            LightPosition1 = new Vector4(13.5f, 13.5f, 0f, 20.0f),
+            LightPosition2 = new Vector4(13.5f, 12.5f, -15.5f, 1.0f),
+            LightPosition3 = new Vector4(-13.5f, 12.5f, -15.5f, 1.0f),
+            LightPosition4 = new Vector4(13.5f, 12.5f, 15.5f, 1.0f),
+            LightColor = new Vector4(1.0f, 1.0f, 1.0f, 1.0f)
         };
         _d3d.DeviceContext.UpdateSubresource(constantBufferNeverChanges, _constantBufferNeverChanges);
 
         var texture = LoadTexture("assets/images/cellceiling.dds", device);
         _texture = device.CreateShaderResourceView(texture);
+
+        _defaultMaterial = new Material(
+            Vector4.One,
+            Vector4.One,
+            Vector4.One,
+            2.0f,
+            _texture,
+            _vertexShader,
+            _pixelShader);
     }
 
     public override void Render(double farseer)
@@ -160,7 +193,12 @@ internal class MyGame : D3D11Application
 
         _d3d.DeviceContext.PSSetShaderResource(0, _texture);
 
-        _renderer.Render(_constantBufferChangesEveryPrim);
+        //_renderer.Render(_constantBufferChangesEveryPrim);
+
+        for (int i = 0; i < _renderObjects.Length; i++)
+        {
+            _renderObjects[i].Render(_d3d.DeviceContext, _constantBufferChangesEveryPrim);
+        }
 
         _d3d.Present();
     }
@@ -172,35 +210,47 @@ internal class MyGame : D3D11Application
 
     private void BindInput()
     {
-        //_input.SetOnLeftPressed(() =>
-        //{
-        //    _gameObjects[0].Position = _gameObjects[0].Position with { X = _gameObjects[0].Position.X - 1 };
-        //    _gameObjects[0].UpdateModelMatrix();
-        //});
-        //_input.SetOnRightPressed(() =>
-        //{
-        //    _gameObjects[0].Position = _gameObjects[0].Position with { X = _gameObjects[0].Position.X + 1 };
-        //    _gameObjects[0].UpdateModelMatrix();
-        //});
-        //_input.SetOnUpPressed(() =>
-        //{
-        //    _gameObjects[0].Position = _gameObjects[0].Position with { Y = _gameObjects[0].Position.Y + 1 };
-        //    _gameObjects[0].UpdateModelMatrix();
-        //});
-        //_input.SetOnDownPressed(() =>
-        //{
-        //    _gameObjects[0].Position = _gameObjects[0].Position with { Y = _gameObjects[0].Position.Y - 1 };
-        //    _gameObjects[0].UpdateModelMatrix();
-        //});
+        _input.SetOnLeftPressed(() =>
+        {
+            //_camera.UpdatePosition(new Vector3(-5.0f, 0.0f, 0.0f));
+            var newEye = new Vector3(_camera.Position.X - 3, _camera.Position.Y, _camera.Position.Z);
+            _camera.SetPosition(newEye);
+            Console.WriteLine(newEye);
+        });
+        _input.SetOnRightPressed(() =>
+        {
+            //_camera.UpdatePosition(new Vector3(5.0f, 0.0f, 0.0f));
+            var newEye = new Vector3(_camera.Position.X + 3, _camera.Position.Y, _camera.Position.Z);
+            _camera.SetPosition(newEye);
+            Console.WriteLine(newEye);
+        });
+        _input.SetOnUpPressed(() =>
+        {
+            //_camera.UpdatePosition(new Vector3(0.0f, 5.0f, 0.0f));
+            var newEye = new Vector3(_camera.Position.X, _camera.Position.Y + 3, _camera.Position.Z);
+            _camera.SetPosition(newEye);
+            Console.WriteLine(newEye);
+        });
+        _input.SetOnDownPressed(() =>
+        {
+            //_camera.UpdatePosition(new Vector3(0.0f, -5.0f, 0.0f));
+            var newEye = new Vector3(_camera.Position.X, _camera.Position.Y - 3, _camera.Position.Z);
+            _camera.SetPosition(newEye);
+            Console.WriteLine(newEye);
+        });
         _input.SetOnZoomInPressed(() =>
         {
-            var newEye = new Vector3(_camera.Eye.X - 3, _camera.Eye.Y - 3, _camera.Eye.Z - 3);
-            _camera.SetEyePosition(newEye);
+            var newEye = new Vector3(_camera.Position.X, _camera.Position.Y, _camera.Position.Z - 3);
+            //var newEye = new Vector3(_camera.Position.X - 3, _camera.Position.Y - 3, _camera.Position.Z - 3);
+            _camera.SetPosition(newEye);
+            Console.WriteLine(newEye);
         });
         _input.SetOnZoomOutPressed(() =>
         {
-            var newEye = new Vector3(_camera.Eye.X + 3, _camera.Eye.Y + 3, _camera.Eye.Z + 3);
-            _camera.SetEyePosition(newEye);
+            var newEye = new Vector3(_camera.Position.X, _camera.Position.Y, _camera.Position.Z + 3);
+            //var newEye = new Vector3(_camera.Position.X + 3, _camera.Position.Y + 3, _camera.Position.Z + 3);
+            _camera.SetPosition(newEye);
+            Console.WriteLine(newEye);
         });
         //_input.SetOnDragRotating(rotation =>
         //{
@@ -208,6 +258,7 @@ internal class MyGame : D3D11Application
         //    _gameObjects[0].UpdateModelMatrix();
         //});
     }
+
     #region load-textures
 
     private static readonly Dictionary<Guid, Guid> s_WICConvert = new()

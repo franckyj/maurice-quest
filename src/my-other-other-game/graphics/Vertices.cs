@@ -14,7 +14,7 @@ internal static class Vertices
     public static InputElementDescription[] PNTVertexLayout = new InputElementDescription[]
     {
         new InputElementDescription("POSITION", 0, Format.R32G32B32_Float, 0, 0, InputClassification.PerVertexData, 0),
-        new InputElementDescription("NORMAL", 0, Format.R32G32B32_Float, 0, 12, InputClassification.PerVertexData, 0),
-        new InputElementDescription("TEXCOORD", 0, Format.R32G32_Float, 0, 24, InputClassification.PerVertexData, 0)
+        new InputElementDescription("NORMAL", 0, Format.R32G32B32_Float, 12, 0, InputClassification.PerVertexData, 0),
+        new InputElementDescription("TEXCOORD", 0, Format.R32G32_Float, 24, 0, InputClassification.PerVertexData, 0)
     };
 }
