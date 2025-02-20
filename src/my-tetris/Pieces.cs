@@ -26,13 +26,13 @@ internal class Piece
 
     public Piece(
         PieceType pieceType,
-        PieceRotation[] clockwiseRotations)
+        PieceRotation[] rotations)
     {
-        if (clockwiseRotations is null || clockwiseRotations is { Length: 0 })
+        if (rotations is null || rotations is { Length: 0 })
             throw new ArgumentException("Must declare at least one rotation");
 
         Type = pieceType;
-        RotationsList = clockwiseRotations;
+        RotationsList = rotations;
 
         // TODO put something else here
         // like Width / 2
@@ -71,10 +71,14 @@ internal class Piece
         return next;
     }
 
-    public BoardCell[] GetFilledCellsFromCurrentLine(int currentLine, int? wannaBeRotation = null)
+    public BoardCell[] GetFilledCellsFromCurrentLine(
+        int currentLine,
+        int? wannaBeRotation = null,
+        bool isSpawning = false)
     {
         var rotations = RotationsList[wannaBeRotation ?? CurrentRotation];
         var cells = new BoardCell[rotations.Deltas.Length];
+        var spawningOffset = isSpawning ? rotations.OffsetWhenSpawning : 0;
 
         for (int i = 0; i < cells.Length; i++)
         {
@@ -82,23 +86,25 @@ internal class Piece
 
             cells[i] = new(
                 rotation.Item1 + CurrentOffset,
-                rotation.Item2 + currentLine);
+                rotation.Item2 + currentLine + spawningOffset);
         }
 
         return cells;
     }
 }
 
-internal readonly record struct PieceRotation(ValueTuple<int, int>[] Deltas);
+internal readonly record struct PieceRotation(ValueTuple<int, int>[] Deltas, int OffsetWhenSpawning = 0);
 
 internal static class PieceSpawner
 {
+    private static readonly Random _random = new Random(DateTime.UtcNow.Millisecond);
+
     public static Piece GetI()
     {
         // rotations are translations from the current line
         // and current offset
         // the '2' is the intersection of the line and the offset
-        return new Piece(
+        var piece = new Piece(
             PieceType.I,
             [
                 // 1 1 2 1
@@ -108,11 +114,11 @@ internal static class PieceSpawner
                 // 2
                 // 1
                 // 1
-                new PieceRotation([new(0, 1), new(0, 0), new(0, -1), new(0, -2)]),
+                new PieceRotation([new(0, 1), new(0, 0), new(0, -1), new(0, -2)], -1),
 
                 //     2
                 // 1 1 1 1
-                new PieceRotation([new(-2, -1), new(-1, -1), new(0, -1), new(1, -1)]),
+                new PieceRotation([new(-2, -1), new(-1, -1), new(0, -1), new(1, -1)], 1),
 
                 // 1
                 // 1 2
@@ -120,11 +126,14 @@ internal static class PieceSpawner
                 // 1
                 new PieceRotation([new(-1, 1), new(-1, 0), new(-1, -1), new(-1, -2)]),
             ]);
+
+        piece.CurrentRotation = _random.Next(0, piece.RotationsList.Length);
+        return piece;
     }
 
     public static Piece GetJ()
     {
-        return new Piece(
+        var piece = new Piece(
             PieceType.J,
             [
                 // 1 2
@@ -139,18 +148,21 @@ internal static class PieceSpawner
                 //   2
                 // 1 1 1
                 //     1
-                new PieceRotation([new(-1, -1), new(0, -1), new(1, -1), new(1, -2)]),
+                new PieceRotation([new(-1, -1), new(0, -1), new(1, -1), new(1, -2)], 1),
 
                 //   2
                 //   1
                 // 1 1
                 new PieceRotation([new(-1, -2), new(0, -2), new(0, -1), new(0, 0)]),
             ]);
+
+        piece.CurrentRotation = _random.Next(0, piece.RotationsList.Length);
+        return piece;
     }
 
     public static Piece GetL()
     {
-        return new Piece(
+        var piece = new Piece(
             PieceType.L,
             [
                 //   2 1
@@ -165,29 +177,35 @@ internal static class PieceSpawner
                 //   2
                 // 1 1 1
                 // 1
-                new PieceRotation([new(-1, -2), new(-1, -1), new(0, -1), new(1, -1)]),
+                new PieceRotation([new(-1, -2), new(-1, -1), new(0, -1), new(1, -1)], 1),
 
                 // 1 2
                 //   1
                 //   1
                 new PieceRotation([new(-1, 0), new(0, 0), new(0, -1), new(0, -2)]),
             ]);
+
+        piece.CurrentRotation = _random.Next(0, piece.RotationsList.Length);
+        return piece;
     }
 
     public static Piece GetO()
     {
-        return new Piece(
+        var piece = new Piece(
             PieceType.O,
             [
                 // 2 1
                 // 1 1
                 new PieceRotation([new(0, 0), new(1, 0), new(0, -1), new(1, -1)])
             ]);
+
+        piece.CurrentRotation = _random.Next(0, piece.RotationsList.Length);
+        return piece;
     }
 
     public static Piece GetS()
     {
-        return new Piece(
+        var piece = new Piece(
             PieceType.S,
             [
                 //   2 1
@@ -202,18 +220,21 @@ internal static class PieceSpawner
                 //   2
                 //   1 1
                 // 1 1
-                new PieceRotation([new(-1, -2), new(0, -2), new(0, -1), new(1, -1)]),
+                new PieceRotation([new(-1, -2), new(0, -2), new(0, -1), new(1, -1)], 1),
 
                 // 1 2
                 // 1 1
                 //   1
                 new PieceRotation([new(-1, 0), new(-1, -1), new(0, -1), new(0, -2)]),
             ]);
+
+        piece.CurrentRotation = _random.Next(0, piece.RotationsList.Length);
+        return piece;
     }
 
     public static Piece GetT()
     {
-        return new Piece(
+        var piece = new Piece(
             PieceType.T,
             [
                 //   2
@@ -228,18 +249,21 @@ internal static class PieceSpawner
                 //   2
                 // 1 1 1
                 //   1
-                new PieceRotation([new(-1, -1), new(0, -1), new(0, -2), new(1, -1)]),
+                new PieceRotation([new(-1, -1), new(0, -1), new(0, -2), new(1, -1)], 1),
 
                 //   2
                 // 1 1
                 //   1
                 new PieceRotation([new(-1, -1), new(0, 0), new(0, -1), new(0, -2)]),
             ]);
+
+        piece.CurrentRotation = _random.Next(0, piece.RotationsList.Length);
+        return piece;
     }
 
     public static Piece GetZ()
     {
-        return new Piece(
+        var piece = new Piece(
             PieceType.Z,
             [
                 // 1 2
@@ -254,13 +278,16 @@ internal static class PieceSpawner
                 //   2
                 // 1 1
                 //   1 1
-                new PieceRotation([new(-1, -1), new(0, -1), new(0, -2), new(1, -2)]),
+                new PieceRotation([new(-1, -1), new(0, -1), new(0, -2), new(1, -2)], 1),
 
                 //   2
                 // 1 1
                 // 1
                 new PieceRotation([new(-1, -2), new(-1, -1), new(0, -1), new(0, 0)]),
             ]);
+
+        piece.CurrentRotation = _random.Next(0, piece.RotationsList.Length);
+        return piece;
     }
 
     public static MeshData CreateBox(in Vector3 size)

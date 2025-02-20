@@ -7,19 +7,22 @@ public readonly record struct BoardCell(int X, int Y);
 
 internal class Board
 {
+    private readonly Random _random;
     private readonly BoardCellState[,] _state;
 
     private Piece _currentPiece;
     private BoardCell[] _currentPieceCells;
     private int _currentLine;
 
-    public short ColumnsCount { get; init; }
-    public short RowsCount { get; init; }
+    public int ColumnsCount { get; init; }
+    public int RowsCount { get; init; }
 
-    public Board()
+    public Board(int rows = 20, int column = 10)
     {
-        ColumnsCount = 10;
-        RowsCount = 20;
+        _random = new Random(DateTime.UtcNow.Millisecond);
+
+        ColumnsCount = column;
+        RowsCount = rows;
 
         _state = new BoardCellState[ColumnsCount, RowsCount];
         Reset();
@@ -102,7 +105,8 @@ internal class Board
         var wannaBeCells = _currentPiece.GetFilledCellsFromCurrentLine(_currentLine, nextRotation);
 
         // meaning that this rotation is invalid
-        if (IsBelowBoard(wannaBeCells) || IsAboveBoard(wannaBeCells) || AreCellsOverlapping(wannaBeCells)) return;
+        if (IsOutsideBoard(wannaBeCells) ||
+            AreCellsOverlapping(wannaBeCells)) return;
 
         EraseCurrentPieceFromBoard();
         _currentPiece.RotateClockwise();
@@ -203,7 +207,9 @@ internal class Board
 
         // fill the cells with the current rotation
         _currentLine = RowsCount - 1;
-        var cellsToFill = _currentPiece.GetFilledCellsFromCurrentLine(_currentLine);
+        var cellsToFill = _currentPiece.GetFilledCellsFromCurrentLine(
+            _currentLine,
+            isSpawning: true);
 
         if (_currentPieceCells is not null)
         {
@@ -225,9 +231,9 @@ internal class Board
         {
             for (int col = 0; col < ColumnsCount; col++)
             {
-                //_state[col, row] = new BoardCellState(false, false, Colors.White);
-                var filled = col < ColumnsCount - 2 && row < 2;
-                _state[col, row] = new BoardCellState(filled, false, Colors.White);
+                _state[col, row] = new BoardCellState(false, false, Colors.White);
+                //var filled = col < ColumnsCount - 2 && row < 2;
+                //_state[col, row] = new BoardCellState(filled, false, Colors.White);
             }
         }
 
@@ -302,11 +308,30 @@ internal class Board
 
     private bool IsBelowBoard(BoardCell[] cellsToFill)
     {
-        var outside = false;
+        var below = false;
 
         foreach (var (x, y) in cellsToFill)
         {
             if (y < 0)
+            {
+                below = true;
+                break;
+            }
+        }
+
+        return below;
+    }
+
+    private bool IsOutsideBoard(BoardCell[] cellsToFill)
+    {
+        var outside = false;
+
+        foreach (var (x, y) in cellsToFill)
+        {
+            if (y >= RowsCount ||
+                y < 0 ||
+                x >= ColumnsCount ||
+                x < 0)
             {
                 outside = true;
                 break;
@@ -318,15 +343,20 @@ internal class Board
 
     public Piece GenerateNewPiece()
     {
-        //var newPiece = DateTime.UtcNow.Second % 2 == 0
-        //    ? PieceSpawner.GetO()
-        //    : PieceSpawner.GetI();
+        var pieceTypes = Enum.GetValues<PieceType>();
+        var pieceTypeNumber = _random.Next(pieceTypes.Length);
+        var pieceType = pieceTypes[pieceTypeNumber];
 
-        if (_currentPiece == null)
-            return PieceSpawner.GetZ();
-
-        return _currentPiece.Type == PieceType.O
-            ? PieceSpawner.GetI()
-            : PieceSpawner.GetO();
+        return pieceType switch
+        {
+            PieceType.I => PieceSpawner.GetI(),
+            PieceType.J => PieceSpawner.GetJ(),
+            PieceType.L => PieceSpawner.GetL(),
+            PieceType.O => PieceSpawner.GetO(),
+            PieceType.S => PieceSpawner.GetS(),
+            PieceType.T => PieceSpawner.GetT(),
+            PieceType.Z => PieceSpawner.GetZ(),
+            _ => PieceSpawner.GetO()
+        };
     }
 }
